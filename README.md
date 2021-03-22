@@ -9,9 +9,7 @@
 
 ---
 
-<p align="center"> 
 **_Fork of the [OpenMaze](https://github.com/DuncanLab/OpenMaze) project for non-visual VR experiments on Spatial Cognition_**
-</p>
 
 ---
 
