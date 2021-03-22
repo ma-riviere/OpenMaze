@@ -11,7 +11,6 @@
 
 **_Fork of the [OpenMaze](https://github.com/DuncanLab/OpenMaze) project for non-visual VR experiments on Spatial Cognition_**
 
----
 
 ## ❔ Requirements:
 - Unity v2019.4.4f1
