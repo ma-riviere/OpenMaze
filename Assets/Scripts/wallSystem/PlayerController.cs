@@ -5,7 +5,6 @@ using trial;
 using UnityEngine;
 using UnityEngine.UI;
 using data;
-using audio;
 using DS = data.DataSingleton;
 using E = main.Loader;
 using Random = UnityEngine.Random;
@@ -163,7 +162,6 @@ namespace wallSystem
                 Cam.transform.position = camPos;
             }
             
-            GameObject.Find("Participant").AddComponent<SSAudioGeneration>();
         }
 
         // This is the collision system.
@@ -172,7 +170,6 @@ namespace wallSystem
             if (!other.gameObject.CompareTag("Pickup")) return;
 
             GetComponent<AudioSource>().PlayOneShot(other.gameObject.GetComponent<PickupSound>().Sound, 10);
-            Destroy(gameObject.GetComponent("SSAudioGeneration"));
             Destroy(other.gameObject);
 
             // Tally the number collected per current block
