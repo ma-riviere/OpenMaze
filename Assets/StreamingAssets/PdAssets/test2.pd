@@ -1,9 +1,9 @@
-#N canvas 2422 130 450 300 12;
-#X obj 114 51 loadbang;
+#N canvas 2621 173 450 300 12;
+#X obj 209 12 loadbang;
 #X obj 119 133 osc~;
 #X obj 120 197 dac~;
-#X obj 65 83 r freq;
-#X msg 216 83 \; freq 200;
+#X obj 65 83 receive freq;
+#X msg 216 83 \; freq 100;
 #X connect 0 0 4 0;
 #X connect 1 0 2 0;
 #X connect 1 0 2 1;

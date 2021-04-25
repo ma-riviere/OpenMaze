@@ -161,7 +161,9 @@ namespace wallSystem
                 camPos.y = DS.GetData().CharacterData.Height;
                 Cam.transform.position = camPos;
             }
-            
+
+            GameObject.Find("Participant").AddComponent<audio.SSAudioPD>();
+
         }
 
         // This is the collision system.

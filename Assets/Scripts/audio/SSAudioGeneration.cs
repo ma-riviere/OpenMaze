@@ -346,7 +346,7 @@ namespace audio
         }
 
         double Discretize(double y, double[] breaks) {
-            double[] added = breaks.Append(y);
+            double[] added = (double[])breaks.Append(y);
             Array.Sort(added);
             int index = Array.FindIndex(added, i => i == y); // Math.Min(Array.FindIndex(added, i => i == y), breaks.Length - 1);
             return(breaks[index]);
