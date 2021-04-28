@@ -7,7 +7,7 @@
         "Height": 2,
         "MovementSpeed": 7.0,
         "RotationSpeed": 75.0,
-        "DistancePickup": 2,
+        "DistancePickup": 0,
         "GoalRotationSpeed": 0
     },
     
@@ -108,7 +108,7 @@
             "Object": "Tutorial_Objects/Apple.png",
             "Sound": "eat",
             "Color": "ffffff",
-            "Position": [7, 1, 7],
+            "Position": [7, 5, 7],
             "Scale": [2, 2, 2]
         },
         {
