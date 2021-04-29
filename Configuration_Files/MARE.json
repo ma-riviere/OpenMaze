@@ -62,7 +62,7 @@
         },
         {
             "Trial 6": "Enclosure 1 - Visible",
-            "DisplayText": "Locate the Apple",
+            "DisplayText": "Locate the ball",
             "TrialTime": 1000,
             "Scene": 2,
             "Enclosure": 1,
@@ -103,13 +103,13 @@
     "GOAL DATA": "GOAL DATA--------------------*********------------------GOAL DATA",
     "Goals": [
         {
-            "Goal 1" : "2D Image - Apple",
-            "Type": "2D",
-            "Object": "Tutorial_Objects/Apple.png",
+            "Goal 1" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
             "Sound": "eat",
-            "Color": "ffffff",
+            "Color": "ff0000",
             "Position": [7, 5, 7],
-            "Scale": [2, 2, 2]
+            "Scale": [1,1,1]
         },
         {
             "Goal 2" : "2D Image - Apple",
