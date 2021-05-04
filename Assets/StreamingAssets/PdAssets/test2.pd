@@ -1,7 +1,7 @@
 #N canvas 1912 -8 1280 637 12;
 #X obj 8 13 loadbang;
 #X obj 213 166 osc~;
-#X obj 266 318 dac~;
+#X obj 298 410 dac~;
 #X obj 251 81 receive freq;
 #X obj 269 129 *~ 0.8;
 #X obj 338 128 *~ 0.667;
@@ -12,7 +12,10 @@
 #X obj 394 216 receive right;
 #X obj 335 263 *~ right;
 #X obj 195 263 *~ left;
-#X msg 8 46 \; freq 100 \; gain 0 \; left 0 \; right 0;
+#X msg 8 46 \; freq 100 \; gain 0 \; left 0 \; right 0 \; hits 0;
+#X obj 725 207 receive hits;
+#X obj 603 218 noise~;
+#X obj 651 275 *~ hits;
 #X connect 0 0 13 0;
 #X connect 1 0 8 0;
 #X connect 3 0 1 0;
@@ -28,3 +31,7 @@
 #X connect 10 0 11 1;
 #X connect 11 0 2 1;
 #X connect 12 0 2 0;
+#X connect 14 0 16 1;
+#X connect 15 0 16 0;
+#X connect 16 0 2 0;
+#X connect 16 0 2 1;
