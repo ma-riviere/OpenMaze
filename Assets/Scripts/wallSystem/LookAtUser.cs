@@ -9,17 +9,13 @@ public class LookAtUser : MonoBehaviour
     private void Start()
     {
         _player = GameObject.Find("Participant");
-
     }
 
     // Update is called once per frame
     private void Update()
     {
-        var origin = transform.position - _player.transform.position;
+        Vector3 origin = transform.position - _player.transform.position;
         origin = origin.normalized;
-
-        var a = Mathf.Rad2Deg * Mathf.Atan2(origin.x, origin.z); //<- Atan2 is the BEST!
-
-        transform.rotation = Quaternion.Euler(0, a, 0);
+        transform.rotation = Quaternion.Euler(0, Mathf.Rad2Deg * Mathf.Atan2(origin.x, origin.z), 0);
     }
 }

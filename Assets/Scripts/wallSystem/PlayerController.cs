@@ -16,28 +16,21 @@ namespace wallSystem
     {
         public Camera Cam;
         private GenerateGenerateWall _gen;
-
         // The stream writer that writes data out to an output file.
         private readonly string _outDir;
-
         // This is the character controller system used for collision
         private CharacterController _controller;
-
         // The initial move direction is static zero.
         private Vector3 _moveDirection = Vector3.zero;
-
         private float _currDelay;
-
         private float _iniRotation;
-
         private float _waitTime;
-
         private bool _playingSound;
-
         private bool _isStarted = false;
-
         private bool _reset;
         private int localQuota;
+
+        private float rotationSpeed, movSpeed;
 
         private const int HIGH_FREQ = 440, LOW_FREQ = 110, MED_FREQ = 220;
         private const int ANGLE_THRESHOLD = 15,HORIZONTAL_MAX_ANGLE = 90;
@@ -49,7 +42,7 @@ namespace wallSystem
         private SphereCollider collider;
 
         private Vector3 userToTargetVector, verticalPointedDirection;
-        private Vector3 normalToVerticalPlane;
+        private Vector3 targetCenterOnScreen,mousePosition,verticalPoint;
         private Ray pointedDirection;
         private RaycastHit hit;
         private bool pointsTarget, touchesTarget, targetGot, previousPointsTarget, previousTouchesTarget;
@@ -119,11 +112,13 @@ namespace wallSystem
             _isStarted = true;
 
             puredataInstance = GetComponent<LibPdInstance>();
+            
             pointsTarget = previousPointsTarget = false;
             touchesTarget = false;
             targetGot = false;
             previousLeft = previousRight = false;
             touchesTargetTime = 0;
+            frequency = 0;
         }
 
         // Start the character. If init from enclosure, this allows "s" to determine the start position
@@ -170,6 +165,10 @@ namespace wallSystem
 
             target = GameObject.FindWithTag("Pickup");
             collider = target.GetComponent<SphereCollider>();
+            verticalPoint = new Vector3(targetCenterOnScreen.x, mousePosition.y, targetCenterOnScreen.z);
+
+            rotationSpeed = DS.GetData().CharacterData.RotationSpeed;
+            movSpeed = DS.GetData().CharacterData.MovementSpeed;
         }
 
         // This is the collision system.
@@ -222,11 +221,10 @@ namespace wallSystem
             if (localQuota <= 0 & E.Get().CurrTrial.trialData.Quota != 0)
                 return;
             // This calculates the current amount of rotation frame rate independent
-            var rotation = Input.GetAxis("Horizontal") * DS.GetData().CharacterData.RotationSpeed * Time.deltaTime;
+            var rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
             // This calculates the forward speed frame rate independent
-            _moveDirection = new Vector3(0, 0, Input.GetAxis("Vertical"));
-            _moveDirection = transform.TransformDirection(_moveDirection);
-            _moveDirection *= DS.GetData().CharacterData.MovementSpeed;
+            _moveDirection.Set(0,0,Input.GetAxis("Vertical"));
+            _moveDirection = transform.TransformDirection(_moveDirection)* movSpeed;
             // Here is the movement system
             const double tolerance = 0.0001;
             // We move iff rotation is 0
@@ -279,7 +277,6 @@ namespace wallSystem
                     _reset = true;
                     TrialProgress.GetCurrTrial().ResetTime();
                 }
-
                 // Move the character.
                 try
                 {
@@ -290,19 +287,23 @@ namespace wallSystem
                     Debug.LogWarning("Skipping movement calc: instructional trial");
                 }
             }
-
             _currDelay += Time.deltaTime;
         }
 
         private void updateAudio()
         {
-            pointedDirection = Cam.ScreenPointToRay(Input.mousePosition);
+            mousePosition = Input.mousePosition;
+            pointedDirection = Cam.ScreenPointToRay(mousePosition);
             pointsTarget = collider.Raycast(pointedDirection, out hit, 9999);
             if (pointsTarget) {
                 if (!previousPointsTarget)
                 {
                     puredataInstance.SendFloat("hits", 1);
                     previousPointsTarget = true;
+                    puredataInstance.SendFloat("right", 0);
+                    previousRight = false;
+                    puredataInstance.SendFloat("left", 0);
+                    previousLeft = false;
                 }
             }
             else
@@ -316,10 +317,12 @@ namespace wallSystem
                 userToTargetVector = target.transform.position - Cam.transform.position;
                 userToTargetHorizontalVector.Set(userToTargetVector.x, userToTargetVector.z);
                 horizontalPointedDirection.Set(pointedDirection.direction.x, pointedDirection.direction.z);
-                normalToVerticalPlane = Vector3.Cross(userToTargetVector, new Vector3(userToTargetVector.x, 0.0f, userToTargetVector.z));
-                verticalPointedDirection = Vector3.ProjectOnPlane(pointedDirection.direction, normalToVerticalPlane);
+                targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
+                verticalPoint.Set(targetCenterOnScreen.x, mousePosition.y, targetCenterOnScreen.z);
+                verticalPointedDirection = Cam.ScreenPointToRay(verticalPoint).direction;
                 horizontalAngle = Vector2.SignedAngle(userToTargetHorizontalVector, horizontalPointedDirection);
-                verticalAngle = Vector3.SignedAngle(userToTargetVector, verticalPointedDirection, normalToVerticalPlane);
+                verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
+
                 distance = userToTargetVector.sqrMagnitude - collider.radius;
 
                 if (horizontalAngle < HORIZONTAL_MAX_ANGLE && horizontalAngle > OPPOSITE_ANGLE_THRESHOLD)
@@ -349,9 +352,9 @@ namespace wallSystem
                     previousLeft = false;
                 }
 
-                if (verticalAngle < ANGLE_THRESHOLD && verticalAngle > OPPOSITE_ANGLE_THRESHOLD)
+                if (verticalAngle < ANGLE_THRESHOLD)
                     frequency = MED_FREQ;
-                else if (verticalAngle > ANGLE_THRESHOLD)
+                else if (mousePosition.y < targetCenterOnScreen.y)
                     frequency = HIGH_FREQ;
                 else frequency = LOW_FREQ;
 
@@ -368,11 +371,8 @@ namespace wallSystem
             */
             Debug.DrawLine(target.transform.position, Cam.transform.position, Color.green);
             Debug.DrawRay(pointedDirection.origin, pointedDirection.direction, Color.red);
-            Debug.DrawRay(Cam.transform.position, normalToVerticalPlane, Color.blue);
-            Debug.DrawRay(Cam.transform.position, verticalPointedDirection, Color.black);
-            Debug.DrawRay(Cam.transform.position, new Vector3(userToTargetVector.x, 0.0f, userToTargetVector.z), Color.yellow);
+            Debug.DrawRay(Cam.transform.position, verticalPointedDirection, Color.blue);
             //Debug.Log(distance);
-            //Debug.Log(horizontalAngle + " " + verticalAngle);
         }
     }
 }

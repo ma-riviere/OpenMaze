@@ -17,10 +17,7 @@ namespace data
         //This function loads the file from a defacto location as shown below
         public static void Load(string fileName)
         {
-            var file = System.IO.File.ReadAllText(fileName);
-
-            var temp = JsonUtility.FromJson<Data>(file);
-            _data = temp;
+            _data = JsonUtility.FromJson<Data>(System.IO.File.ReadAllText(fileName));
         }
     }
 }
