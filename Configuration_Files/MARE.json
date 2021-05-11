@@ -4,6 +4,7 @@
     "TimingVerification": false,
     "CHARACTER DATA": "CHARACTER DATA----------*********-------------------CHARACTER DATA",
     "CharacterData": {
+        "Radius":0.1,
         "Height": 2,
         "MovementSpeed": 7.0,
         "RotationSpeed": 75.0,
@@ -108,8 +109,8 @@
             "Object": "Sphere",
             "Sound": "eat",
             "Color": "ff0000",
-            "Position": [7, 5, 7],
-            "Scale": [1,1,1]
+            "Position": [7, 2, 7],
+            "Scale": [0.5,0.5,0.5]
         },
         {
             "Goal 2" : "2D Image - Apple",

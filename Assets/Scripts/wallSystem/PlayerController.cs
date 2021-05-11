@@ -14,6 +14,7 @@ namespace wallSystem
 {
     public class PlayerController : MonoBehaviour
     {
+        #region properties
         public Camera Cam;
         private GenerateGenerateWall _gen;
         // The stream writer that writes data out to an output file.
@@ -33,25 +34,27 @@ namespace wallSystem
         private float rotationSpeed, movSpeed;
 
         private const int HIGH_FREQ = 440, LOW_FREQ = 110, MED_FREQ = 220;
-        private const int ANGLE_THRESHOLD = 15,HORIZONTAL_MAX_ANGLE = 90;
+        private const int ANGLE_THRESHOLD = 15, HORIZONTAL_MAX_ANGLE = 90;
         private const int OPPOSITE_ANGLE_THRESHOLD = -ANGLE_THRESHOLD, OPPOSITE_HOR_MAX_ANGLE = -HORIZONTAL_MAX_ANGLE;
         private const float TOUCH_DELAY = 1.0f;
 
         private LibPdInstance puredataInstance;
         private GameObject target;
-        private SphereCollider collider;
+        private SphereCollider targetCollider;
 
         private Vector3 userToTargetVector, verticalPointedDirection;
-        private Vector3 targetCenterOnScreen,mousePosition,verticalPoint;
+        private Vector3 targetCenterOnScreen, mousePosition, verticalPoint;
         private Ray pointedDirection;
         private RaycastHit hit;
-        private bool pointsTarget, touchesTarget, targetGot, previousPointsTarget, previousTouchesTarget;
-        private float touchesTargetTime;
+        private bool pointsTarget, previousPointsTarget;
         private Vector2 userToTargetHorizontalVector, horizontalPointedDirection;
         private float distance;
         private float horizontalAngle, verticalAngle;
         private float frequency, previousFrequency;
         private bool previousLeft, previousRight;
+
+        float enterTime;
+        #endregion
 
         private void Start()
         {
@@ -63,6 +66,7 @@ namespace wallSystem
                 // This section sets the text
                 trialText.text = E.Get().CurrTrial.trialData.DisplayText;
                 blockText.text = DS.GetData().Blocks[currBlockId].DisplayText;
+
                 if (!string.IsNullOrEmpty(E.Get().CurrTrial.trialData.DisplayImage))
                 {
                     var filePath = DS.GetData().SpritesPath + E.Get().CurrTrial.trialData.DisplayImage;
@@ -83,6 +87,7 @@ namespace wallSystem
             else
                 _iniRotation = E.Get().CurrTrial.trialData.StartFacing;
             transform.Rotate(0, _iniRotation, 0);
+
             try
             {
                 _controller = GetComponent<CharacterController>();
@@ -112,13 +117,13 @@ namespace wallSystem
             _isStarted = true;
 
             puredataInstance = GetComponent<LibPdInstance>();
-            
             pointsTarget = previousPointsTarget = false;
-            touchesTarget = false;
-            targetGot = false;
             previousLeft = previousRight = false;
-            touchesTargetTime = 0;
             frequency = 0;
+            verticalPoint = new Vector3(targetCenterOnScreen.x, mousePosition.y, targetCenterOnScreen.z);
+
+            rotationSpeed = DS.GetData().CharacterData.RotationSpeed;
+            movSpeed = DS.GetData().CharacterData.MovementSpeed;
         }
 
         // Start the character. If init from enclosure, this allows "s" to determine the start position
@@ -126,7 +131,6 @@ namespace wallSystem
         {
             while (!_isStarted)
                 Thread.Sleep(20);
-
             TrialProgress.GetCurrTrial().TrialProgress.TargetX = pickX;
             TrialProgress.GetCurrTrial().TrialProgress.TargetY = pickY;
             // No start pos specified so make it random.
@@ -162,75 +166,46 @@ namespace wallSystem
                 camPos.y = DS.GetData().CharacterData.Height;
                 Cam.transform.position = camPos;
             }
-
+            Debug.Log(Cam.transform.position);
+            _controller.center = Cam.transform.position;
+            _controller.radius = DS.GetData().CharacterData.Radius;
+            _controller.height= DS.GetData().CharacterData.Radius;
             target = GameObject.FindWithTag("Pickup");
-            collider = target.GetComponent<SphereCollider>();
-            verticalPoint = new Vector3(targetCenterOnScreen.x, mousePosition.y, targetCenterOnScreen.z);
-
-            rotationSpeed = DS.GetData().CharacterData.RotationSpeed;
-            movSpeed = DS.GetData().CharacterData.MovementSpeed;
+            targetCollider = target.GetComponent<SphereCollider>();
         }
 
         // This is the collision system.
         private void OnTriggerEnter(Collider other)
         {
             if (!other.gameObject.CompareTag("Pickup")) return;
-            if (!touchesTarget)
-            {
-                touchesTarget = true;
-                touchesTargetTime = Time.time;
-            }
+
+            enterTime = Time.time;
         }
 
         private void OnTriggerStay(Collider other)
         {
             if (!other.gameObject.CompareTag("Pickup")) return;
-            if (touchesTarget)
+            if (Time.time - enterTime > TOUCH_DELAY)
             {
-                if (Time.time - touchesTargetTime > TOUCH_DELAY)
-                {
-                    targetGot = true;
-                    puredataInstance.SendBang("targetGot");
-                    Destroy(other.gameObject);
-                    // Tally the number collected per current block
-                    int BlockID = TrialProgress.GetCurrTrial().BlockID;
-                    TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
-                    TrialProgress.GetCurrTrial().NumCollected++;
-                    E.LogData(
-                        TrialProgress.GetCurrTrial().TrialProgress,
-                        TrialProgress.GetCurrTrial().TrialStartTime,
-                        transform,
-                        1
-                    );
-                    if (--localQuota > 0) return;
-                    E.Get().CurrTrial.Notify();
-                }
+                GetComponent<AudioSource>().PlayOneShot(other.gameObject.GetComponent<PickupSound>().Sound, 10);
+                Destroy(other.gameObject);
+                // Tally the number collected per current block
+                int BlockID = TrialProgress.GetCurrTrial().BlockID;
+                TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
+                TrialProgress.GetCurrTrial().NumCollected++;
+                E.LogData(
+                    TrialProgress.GetCurrTrial().TrialProgress,
+                    TrialProgress.GetCurrTrial().TrialStartTime,
+                    transform,
+                    1
+                );
+
+                if (--localQuota > 0) return;
+
+                E.Get().CurrTrial.Notify();
+                E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
+                TrialProgress.GetCurrTrial().Progress();
             }
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (!other.gameObject.CompareTag("Pickup")) return;
-            touchesTarget = false;
-            touchesTargetTime = 0;
-        }
-
-        private void ComputeMovement()
-        {
-            // Dont move if the quota has been reached
-            if (localQuota <= 0 & E.Get().CurrTrial.trialData.Quota != 0)
-                return;
-            // This calculates the current amount of rotation frame rate independent
-            var rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
-            // This calculates the forward speed frame rate independent
-            _moveDirection.Set(0,0,Input.GetAxis("Vertical"));
-            _moveDirection = transform.TransformDirection(_moveDirection)* movSpeed;
-            // Here is the movement system
-            const double tolerance = 0.0001;
-            // We move iff rotation is 0
-            if (Math.Abs(Mathf.Abs(rotation)) < tolerance)
-                _controller.Move(_moveDirection * Time.deltaTime);
-            transform.Rotate(0, rotation, 0);
         }
 
         private void doInitialRotation()
@@ -239,8 +214,10 @@ namespace wallSystem
             // Smooth out the rotation as we approach the values
             var threshold1 = Math.Abs(_currDelay / _waitTime - 0.25f);
             var threshold2 = Math.Abs(_currDelay / _waitTime - 0.75f);
+
             if (threshold1 < 0.03 || threshold2 < 0.03)
                 return;
+
             if (_currDelay / _waitTime > 0.25 && _currDelay / _waitTime < 0.75)
                 multiplier *= -1;
             var anglePerSecond = 240 / _waitTime;
@@ -252,22 +229,10 @@ namespace wallSystem
         {
             E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
 
-            // Wait for the sound to finish playing before ending the trial
-            if (targetGot)
-            {
-                Thread.Sleep(1000);
-                TrialProgress.GetCurrTrial().Progress();
-                targetGot = false;
-                touchesTarget = false;
-                pointsTarget = false;
-            }
-            else updateAudio();
-
+            updateAudio();
             // This first block is for the initial rotation of the character
             if (_currDelay < _waitTime)
-            {
                 doInitialRotation();
-            }
             else
             {
                 // This section rotates the camera (potentiall up 15 degrees), basically deprecated code.
@@ -277,25 +242,32 @@ namespace wallSystem
                     _reset = true;
                     TrialProgress.GetCurrTrial().ResetTime();
                 }
-                // Move the character.
-                try
-                {
-                    ComputeMovement();
-                }
-                catch (MissingComponentException e)
-                {
-                    Debug.LogWarning("Skipping movement calc: instructional trial");
-                }
             }
             _currDelay += Time.deltaTime;
         }
 
-        private void updateAudio()
+        private void FixedUpdate()
         {
             mousePosition = Input.mousePosition;
             pointedDirection = Cam.ScreenPointToRay(mousePosition);
-            pointsTarget = collider.Raycast(pointedDirection, out hit, 9999);
-            if (pointsTarget) {
+            pointsTarget = targetCollider.Raycast(pointedDirection, out hit, 1000);
+            // This calculates the current amount of rotation frame rate independent
+            float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+            // This calculates the forward speed frame rate independent
+            _moveDirection.Set(0, 0, Input.GetAxis("Vertical"));
+            _moveDirection = transform.TransformDirection(_moveDirection) * movSpeed;
+            // Here is the movement system
+            const double tolerance = 0.0001;
+            // We move iff rotation is 0
+            if (Math.Abs(Mathf.Abs(rotation)) < tolerance)
+                _controller.Move(_moveDirection * Time.deltaTime);
+            transform.Rotate(0, rotation, 0);
+        }
+
+        private void updateAudio()
+        {
+            if (pointsTarget)
+            {
                 if (!previousPointsTarget)
                 {
                     puredataInstance.SendFloat("hits", 1);
@@ -323,7 +295,7 @@ namespace wallSystem
                 horizontalAngle = Vector2.SignedAngle(userToTargetHorizontalVector, horizontalPointedDirection);
                 verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
 
-                distance = userToTargetVector.sqrMagnitude - collider.radius;
+                distance = userToTargetVector.sqrMagnitude - targetCollider.radius;
 
                 if (horizontalAngle < HORIZONTAL_MAX_ANGLE && horizontalAngle > OPPOSITE_ANGLE_THRESHOLD)
                 {
@@ -369,10 +341,15 @@ namespace wallSystem
                 puredataInstance.SendFloat("gain", 50);
             else puredataInstance.SendFloat("gain", 20);
             */
+        }
+
+        private void LateUpdate()
+        {
             Debug.DrawLine(target.transform.position, Cam.transform.position, Color.green);
             Debug.DrawRay(pointedDirection.origin, pointedDirection.direction, Color.red);
             Debug.DrawRay(Cam.transform.position, verticalPointedDirection, Color.blue);
             //Debug.Log(distance);
         }
+
     }
 }

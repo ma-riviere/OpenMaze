@@ -174,6 +174,7 @@ namespace data
             public float RotationSpeed; //The rotation speed of the character
             public float GoalRotationSpeed; //The rotation speed of the goals
             public float Height; //The height of the character
+            public float Radius;
             public float DistancePickup; //The min distance of the pickup to the character
         }
 
