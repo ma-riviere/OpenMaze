@@ -53,7 +53,6 @@ namespace wallSystem
         private float frequency, previousFrequency;
         private bool previousLeft, previousRight;
 
-        float enterTime;
         #endregion
 
         private void Start()
@@ -166,8 +165,7 @@ namespace wallSystem
                 camPos.y = DS.GetData().CharacterData.Height;
                 Cam.transform.position = camPos;
             }
-            Debug.Log(Cam.transform.position);
-            _controller.center = Cam.transform.position;
+            _controller.center=new Vector3(_controller.center.x, Cam.transform.position.y- _controller.center.y, _controller.center.z);
             _controller.radius = DS.GetData().CharacterData.Radius;
             _controller.height= DS.GetData().CharacterData.Radius;
             target = GameObject.FindWithTag("Pickup");
@@ -179,33 +177,24 @@ namespace wallSystem
         {
             if (!other.gameObject.CompareTag("Pickup")) return;
 
-            enterTime = Time.time;
-        }
+            GetComponent<AudioSource>().PlayOneShot(other.gameObject.GetComponent<PickupSound>().Sound, 10);
+            Destroy(other.gameObject);
+            // Tally the number collected per current block
+            int BlockID = TrialProgress.GetCurrTrial().BlockID;
+            TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
+            TrialProgress.GetCurrTrial().NumCollected++;
+            E.LogData(
+                TrialProgress.GetCurrTrial().TrialProgress,
+                TrialProgress.GetCurrTrial().TrialStartTime,
+                transform,
+                1
+            );
 
-        private void OnTriggerStay(Collider other)
-        {
-            if (!other.gameObject.CompareTag("Pickup")) return;
-            if (Time.time - enterTime > TOUCH_DELAY)
-            {
-                GetComponent<AudioSource>().PlayOneShot(other.gameObject.GetComponent<PickupSound>().Sound, 10);
-                Destroy(other.gameObject);
-                // Tally the number collected per current block
-                int BlockID = TrialProgress.GetCurrTrial().BlockID;
-                TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
-                TrialProgress.GetCurrTrial().NumCollected++;
-                E.LogData(
-                    TrialProgress.GetCurrTrial().TrialProgress,
-                    TrialProgress.GetCurrTrial().TrialStartTime,
-                    transform,
-                    1
-                );
+            if (--localQuota > 0) return;
 
-                if (--localQuota > 0) return;
-
-                E.Get().CurrTrial.Notify();
-                E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
-                TrialProgress.GetCurrTrial().Progress();
-            }
+            E.Get().CurrTrial.Notify();
+            E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
+            TrialProgress.GetCurrTrial().Progress();
         }
 
         private void doInitialRotation()
