@@ -26,17 +26,17 @@ namespace wallSystem
         private float _currDelay;
         private float _iniRotation;
         private float _waitTime;
-        private bool _playingSound;
         private bool _isStarted = false;
         private bool _reset;
         private int localQuota;
 
-        private float rotationSpeed, movSpeed;
+        private float movSpeed;
+        bool _playingSound;
 
         private const int HIGH_FREQ = 440, LOW_FREQ = 110, MED_FREQ = 220;
-        private const int ANGLE_THRESHOLD = 15, HORIZONTAL_MAX_ANGLE = 90;
+        private const int ANGLE_THRESHOLD = 15, HORIZONTAL_MAX_ANGLE = 80;
         private const int OPPOSITE_ANGLE_THRESHOLD = -ANGLE_THRESHOLD, OPPOSITE_HOR_MAX_ANGLE = -HORIZONTAL_MAX_ANGLE;
-        private const float TOUCH_DELAY = 1.0f;
+        float min = 0.01f;
 
         private LibPdInstance puredataInstance;
         private GameObject target;
@@ -53,6 +53,9 @@ namespace wallSystem
         private float frequency, previousFrequency;
         private bool previousLeft, previousRight;
 
+        public float sensitivity = 1f;
+        public float maxYAngle = 90f, minYAngle = -90f;
+        private Vector2 currentRotation;
         #endregion
 
         private void Start()
@@ -120,9 +123,8 @@ namespace wallSystem
             previousLeft = previousRight = false;
             frequency = 0;
             verticalPoint = new Vector3(targetCenterOnScreen.x, mousePosition.y, targetCenterOnScreen.z);
-
-            rotationSpeed = DS.GetData().CharacterData.RotationSpeed;
             movSpeed = DS.GetData().CharacterData.MovementSpeed;
+            mousePosition = new Vector3(Cam.pixelWidth / 2, Cam.pixelHeight / 2, 0);
         }
 
         // Start the character. If init from enclosure, this allows "s" to determine the start position
@@ -145,10 +147,7 @@ namespace wallSystem
                     var mag = Vector3.Distance(v, new Vector2(pickX, pickY));
                     if (mag > DS.GetData().CharacterData.DistancePickup)
                     {
-                        transform.position = new Vector3(v.x, 0.5f, v.y);
-                        var camPos = Cam.transform.position;
-                        camPos.y = DS.GetData().CharacterData.Height;
-                        Cam.transform.position = camPos;
+                        transform.position = new Vector3(v.x, DS.GetData().CharacterData.Height, v.y);
                         return;
                     }
                 }
@@ -160,14 +159,10 @@ namespace wallSystem
                 var p = E.Get().CurrTrial.trialData.StartPosition;
                 if (useEnclosure)
                     p = new List<float>() { pickX, pickY };
-                transform.position = new Vector3(p[0], 0.5f, p[1]);
-                var camPos = Cam.transform.position;
-                camPos.y = DS.GetData().CharacterData.Height;
-                Cam.transform.position = camPos;
+                transform.position = new Vector3(p[0], DS.GetData().CharacterData.Height, p[1]);
             }
-            _controller.center=new Vector3(_controller.center.x, Cam.transform.position.y- _controller.center.y, _controller.center.z);
-            _controller.radius = DS.GetData().CharacterData.Radius;
-            _controller.height= DS.GetData().CharacterData.Radius;
+            Cam.transform.localPosition = _controller.center = Vector3.zero;
+            _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
             target = GameObject.FindWithTag("Pickup");
             targetCollider = target.GetComponent<SphereCollider>();
         }
@@ -217,7 +212,6 @@ namespace wallSystem
         private void Update()
         {
             E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
-
             updateAudio();
             // This first block is for the initial rotation of the character
             if (_currDelay < _waitTime)
@@ -237,20 +231,21 @@ namespace wallSystem
 
         private void FixedUpdate()
         {
-            mousePosition = Input.mousePosition;
             pointedDirection = Cam.ScreenPointToRay(mousePosition);
+            pointedDirection.origin = transform.position;
             pointsTarget = targetCollider.Raycast(pointedDirection, out hit, 1000);
             // This calculates the current amount of rotation frame rate independent
-            float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
             // This calculates the forward speed frame rate independent
-            _moveDirection.Set(0, 0, Input.GetAxis("Vertical"));
+            _moveDirection.Set(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
             _moveDirection = transform.TransformDirection(_moveDirection) * movSpeed;
+            _controller.Move(_moveDirection * Time.deltaTime);
             // Here is the movement system
-            const double tolerance = 0.0001;
             // We move iff rotation is 0
-            if (Math.Abs(Mathf.Abs(rotation)) < tolerance)
-                _controller.Move(_moveDirection * Time.deltaTime);
-            transform.Rotate(0, rotation, 0);
+            currentRotation.x += Input.GetAxis("Mouse X") * sensitivity;
+            currentRotation.y -= Input.GetAxis("Mouse Y") * sensitivity;
+            currentRotation.x = Mathf.Repeat(currentRotation.x, 360);
+            currentRotation.y = Mathf.Clamp(currentRotation.y, minYAngle, maxYAngle);
+            transform.rotation = Quaternion.Euler(currentRotation.y, currentRotation.x, 0);
         }
 
         private void updateAudio()
@@ -275,7 +270,7 @@ namespace wallSystem
                     previousPointsTarget = false;
                 }
 
-                userToTargetVector = target.transform.position - Cam.transform.position;
+                userToTargetVector = target.transform.position - transform.position;
                 userToTargetHorizontalVector.Set(userToTargetVector.x, userToTargetVector.z);
                 horizontalPointedDirection.Set(pointedDirection.direction.x, pointedDirection.direction.z);
                 targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
@@ -283,8 +278,7 @@ namespace wallSystem
                 verticalPointedDirection = Cam.ScreenPointToRay(verticalPoint).direction;
                 horizontalAngle = Vector2.SignedAngle(userToTargetHorizontalVector, horizontalPointedDirection);
                 verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
-
-                distance = userToTargetVector.sqrMagnitude - targetCollider.radius;
+                distance = userToTargetVector.magnitude - targetCollider.radius-_controller.radius;
 
                 if (horizontalAngle < HORIZONTAL_MAX_ANGLE && horizontalAngle > OPPOSITE_ANGLE_THRESHOLD)
                 {
@@ -296,7 +290,7 @@ namespace wallSystem
                 }
                 else if (previousRight)
                 {
-                    puredataInstance.SendFloat("right", 0);
+                    puredataInstance.SendFloat("right", min);
                     previousRight = false;
                 }
                 if (horizontalAngle > OPPOSITE_HOR_MAX_ANGLE && horizontalAngle < ANGLE_THRESHOLD)
@@ -309,7 +303,7 @@ namespace wallSystem
                 }
                 else if (previousLeft)
                 {
-                    puredataInstance.SendFloat("left", 0);
+                    puredataInstance.SendFloat("left", min);
                     previousLeft = false;
                 }
 
@@ -324,17 +318,17 @@ namespace wallSystem
                     puredataInstance.SendFloat("freq", frequency);
                     previousFrequency = frequency;
                 }
+
+                if (distance < 2)
+                    puredataInstance.SendFloat("gain", 3.0f/127.0f);
+                else puredataInstance.SendFloat("gain", 1.0f/127.0f);
             }
-            /*
-            if (distance < 1)
-                puredataInstance.SendFloat("gain", 50);
-            else puredataInstance.SendFloat("gain", 20);
-            */
+            
         }
 
         private void LateUpdate()
         {
-            Debug.DrawLine(target.transform.position, Cam.transform.position, Color.green);
+            Debug.DrawRay(transform.position, userToTargetVector, Color.green);
             Debug.DrawRay(pointedDirection.origin, pointedDirection.direction, Color.red);
             Debug.DrawRay(Cam.transform.position, verticalPointedDirection, Color.blue);
             //Debug.Log(distance);
