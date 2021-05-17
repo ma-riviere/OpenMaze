@@ -1,4 +1,4 @@
-#N canvas 44 48 1280 637 12;
+#N canvas -8 -8 1920 997 12;
 #X obj 8 13 loadbang;
 #X obj 172 128 osc~;
 #X obj 428 423 dac~;
@@ -8,7 +8,7 @@
 #X obj 242 167 osc~;
 #X obj 318 161 osc~;
 #X obj 244 213 *~ 0.333;
-#X obj 118 11 receive left;
+#X obj 94 10 receive left;
 #X obj 499 10 receive right;
 #X obj 668 10 receive hits;
 #X obj 485 177 noise~;
@@ -17,7 +17,7 @@
 #X obj 351 205 line~;
 #X obj 240 333 *~;
 #X obj 346 331 *~;
-#X obj 141 209 pack 0 10;
+#X obj 93 130 pack 0 10;
 #X obj 188 268 line~;
 #X obj 475 127 pack 0 10;
 #X obj 388 262 line~;

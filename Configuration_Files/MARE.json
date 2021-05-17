@@ -13,10 +13,11 @@
     },
 
     "AudioData":{
-        "encoder":"Dissociated",
+        "encoder":"Associated",
         "maxAngle":80,
         "angleThreshold":15,
-        "distanceMax":2
+        "distanceMax":2,
+        "frequencyComputer":"discrete"
     },
     
     "BLOCK DATA": "BLOCK DATA---------------------*********--------------------BLOCK DATA",

@@ -4,22 +4,21 @@ namespace audio
 {
     public class DimAssociatedEncoder : SSAudioGeneration
     {
-        FrequencyComputer freqComputer;
         private float angle;
         // Use this for initialization
-        void Start()
+        void Awake()
         {
             init();
             puredataInstance.SendFloat("left", 1);
             puredataInstance.SendFloat("right", 1);
-            freqComputer = new ContinuousComputer(maxAngle);
         }
         
         public override void setFrequencyComputation(string computer)
         {
-            if (computer=="continuous")
+            if (computer.ToLower().Equals("continuous"))
                 freqComputer = new ContinuousComputer(maxAngle);
-            //else freqComputer = new DiscreteComputer(maxAngle, angleThreshold);
+            if (computer.ToLower().Equals("discrete"))
+                freqComputer = new DiscreteComputer(angleThreshold);
         }
 
         // Update is called once per frame
@@ -47,7 +46,7 @@ namespace audio
 
                 if (angle < maxAngle)
                 {
-                    frequency = freqComputer.computeFrequency(angle);
+                    frequency = freqComputer.computeFrequency(angle,angleThreshold);
                     puredataInstance.SendFloat("freq", frequency);
                 }
                 else if (frequency != 0)
@@ -60,29 +59,22 @@ namespace audio
             }
         }
 
-        private abstract class FrequencyComputer
+        private class DiscreteComputer : FrequencyComputer
         {
-            protected float k, b;
-            protected FrequencyComputer(float maxAngle) { }
-
-            public abstract float computeFrequency(float angle);
-        }
-
-        private class ContinuousComputer : FrequencyComputer
-        {
-            public ContinuousComputer(float maxAngle) : base(maxAngle)
+            float threshold;
+            public DiscreteComputer(float threshold)
             {
-                k = Mathf.Log(Mathf.Pow(0.25f, 1.0f / Mathf.Log(maxAngle)));
-                b = Mathf.Log(HIGH_FREQ);
+                this.threshold = threshold;
             }
 
-            public override float computeFrequency(float angle)
+            public override float computeFrequency(float angle,float criterium)
             {
-                return Mathf.Exp(k * Mathf.Log(angle) + b);
+                if (angle < threshold)
+                    return HIGH_FREQ;
+                else return LOW_FREQ;
             }
+
         }
 
     }
-
-
 }

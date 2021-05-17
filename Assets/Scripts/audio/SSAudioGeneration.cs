@@ -25,6 +25,8 @@ namespace audio
         protected float distance;
         protected float frequency,previousFrequency,gain, previousGain;
 
+        protected FrequencyComputer freqComputer;
+
         public static void addSelectedAudioEncoder(Data.Audio audioData)
         {
             switch (audioData.encoder)
@@ -40,7 +42,7 @@ namespace audio
             angleThreshold = audioData.angleThreshold;
             maxAngle = audioData.maxAngle;
             distanceMax = audioData.distanceMax;
-            //setFrequencyComputation(audioData.frequencyComputer);
+            setFrequencyComputation(audioData.frequencyComputer);
         }
 
         public abstract void setFrequencyComputation(string computer);
@@ -67,9 +69,8 @@ namespace audio
         protected void setContinuousGain()
         {
             distance = userToTargetVector.magnitude - targetSelfRadiusSum;
-            Debug.Log(distance);
+            
             if (distance < distanceMax)
-                //gain = Mathf.Exp(kGain*Mathf.Log(distance)+b);
                 gain = GAIN_MAX;
             else
                 gain = GAIN_MIN;
@@ -86,6 +87,27 @@ namespace audio
             //Debug.DrawRay(pointedDirection.origin, pointedDirection.direction, Color.red);
             //Debug.DrawRay(Cam.transform.position, verticalPointedDirection, Color.blue);
             //Debug.Log(distance);
+        }
+
+        public abstract class FrequencyComputer
+        {
+            protected FrequencyComputer() { }
+            public abstract float computeFrequency(float angle, float criterium);
+        }
+
+        protected class ContinuousComputer : FrequencyComputer
+        {
+            protected float k, b;
+            public ContinuousComputer(float maxAngle)
+            {
+                k = Mathf.Log(Mathf.Pow(0.25f, 1.0f / Mathf.Log(maxAngle)));
+                b = Mathf.Log(HIGH_FREQ);
+            }
+
+            public override float computeFrequency(float angle, float criterium)
+            {
+                return Mathf.Exp(k * Mathf.Log(angle) + b);
+            }
         }
 
     }

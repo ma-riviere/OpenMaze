@@ -10,7 +10,7 @@ namespace audio
         private float horizontalAngle, verticalAngle;
         protected bool previousLeft, previousRight;
 
-        void Start()
+        void Awake()
         {
             init();
             screenCenterY = Cam.pixelHeight/2;
@@ -19,7 +19,10 @@ namespace audio
 
         public override void setFrequencyComputation(string computer)
         {
-
+            if (computer.ToLower().Equals("continuous"))
+                freqComputer = new ContinuousComputer(maxAngle);
+            if (computer.ToLower().Equals("discrete")) 
+                freqComputer = new DiscreteComputer(angleThreshold, screenCenterY);
         }
 
         private void Update()
@@ -92,11 +95,7 @@ namespace audio
             verticalPointedDirection = Cam.ScreenPointToRay(verticalScreenPoint).direction;
             verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
 
-            if (verticalAngle < angleThreshold)
-                frequency = MED_FREQ;
-            else if (targetCenterOnScreen.y > screenCenterY)
-                frequency = HIGH_FREQ;
-            else frequency = LOW_FREQ;
+            frequency = freqComputer.computeFrequency(verticalAngle, targetCenterOnScreen.y);
 
             if (frequency != previousFrequency)
             {
@@ -105,16 +104,10 @@ namespace audio
             }
         }
 
-        private abstract class FrequencyComputer
-        {
-            protected FrequencyComputer(){}
-            public abstract float computeFrequency(float angle,float criterium);
-        }
-
         private class DiscreteComputer : FrequencyComputer
         {
             float threshold, screenCenterY;
-            protected DiscreteComputer(float threshold,float screenCenterY) : base()
+            public DiscreteComputer(float threshold,float screenCenterY)
             {
                 this.threshold = threshold;
                 this.screenCenterY = screenCenterY;
@@ -123,23 +116,9 @@ namespace audio
             {
                 if (angle < threshold)
                     return MED_FREQ;
-                else if (criterium > screenCenterY)
-                    return HIGH_FREQ;
-                else return LOW_FREQ;
-            }
-        }
-
-        private class ContinuousComputer : FrequencyComputer
-        {
-            float k, b;
-            protected ContinuousComputer(float maxAngle)
-            {
-                k = Mathf.Log(Mathf.Pow(0.25f, 1.0f / Mathf.Log(maxAngle)));
-                b = Mathf.Log(HIGH_FREQ);
-            }
-            public override float computeFrequency(float angle, float criterium)
-            {
-                return Mathf.Exp(k * Mathf.Log(angle) + b);
+                else if (criterium < screenCenterY)
+                    return LOW_FREQ;
+                else return HIGH_FREQ;
             }
         }
 
