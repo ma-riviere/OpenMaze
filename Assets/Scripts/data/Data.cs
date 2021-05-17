@@ -1,4 +1,5 @@
-﻿using System;
+﻿using audio;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,8 @@ namespace data
 
         //This is the object (defined below) which contains all data available for the main player
         public Character CharacterData;
+
+        public Audio AudioData;
 
         // The output file of the character's movements during an experiment
         public string OutputFile;
@@ -176,6 +179,16 @@ namespace data
             public float Height; //The height of the character
             public float Radius;
             public float DistancePickup; //The min distance of the pickup to the character
+        }
+
+        [Serializable]
+        public class Audio
+        {
+            public string encoder;
+            public float maxAngle;
+            public float angleThreshold;
+            public float distanceMax;
+            public string frequencyComputer;
         }
 
         // This is a pillar object.

@@ -11,6 +11,13 @@
         "DistancePickup": 0,
         "GoalRotationSpeed": 0
     },
+
+    "AudioData":{
+        "encoder":"Dissociated",
+        "maxAngle":80,
+        "angleThreshold":15,
+        "distanceMax":2
+    },
     
     "BLOCK DATA": "BLOCK DATA---------------------*********--------------------BLOCK DATA",
     
