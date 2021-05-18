@@ -17,6 +17,11 @@ namespace audio
             verticalScreenPoint = new Vector3(targetCenterOnScreen.x, screenCenterY, targetCenterOnScreen.z);
         }
 
+        protected override void setStereo(bool stereo)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public override void setFrequencyComputation(string computer)
         {
             if (computer.ToLower().Equals("continuous"))

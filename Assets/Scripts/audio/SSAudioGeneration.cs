@@ -29,10 +29,11 @@ namespace audio
 
         public static void addSelectedAudioEncoder(Data.Audio audioData)
         {
-            switch (audioData.encoder)
+            switch (audioData.encoder.ToLower())
             {
-                case "Dissociated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimDissociatedEncoder>();break;
-                case "Associated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimAssociatedEncoder>(); break;
+                case "dissociated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimDissociatedEncoder>();break;
+                case "associated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimAssociatedEncoder>(); break;
+                case "horizontal": FindObjectOfType<PlayerController>().gameObject.AddComponent<HorizontalEncoder>(); break;
             }
             FindObjectOfType<PlayerController>().gameObject.GetComponent<SSAudioGeneration>().setParams(audioData);
         }
@@ -43,7 +44,10 @@ namespace audio
             maxAngle = audioData.maxAngle;
             distanceMax = audioData.distanceMax;
             setFrequencyComputation(audioData.frequencyComputer);
+            setStereo(audioData.stereo);
         }
+
+        protected abstract void setStereo(bool stereo);
 
         public abstract void setFrequencyComputation(string computer);
 

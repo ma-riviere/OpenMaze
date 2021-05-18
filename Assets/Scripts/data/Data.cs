@@ -189,6 +189,7 @@ namespace data
             public float angleThreshold;
             public float distanceMax;
             public string frequencyComputer;
+            public bool stereo;
         }
 
         // This is a pillar object.

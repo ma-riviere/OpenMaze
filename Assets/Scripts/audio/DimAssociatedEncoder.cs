@@ -12,8 +12,13 @@ namespace audio
             puredataInstance.SendFloat("left", 1);
             puredataInstance.SendFloat("right", 1);
         }
-        
-        public override void setFrequencyComputation(string computer)
+
+        protected override void setStereo(bool stereo)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override  void setFrequencyComputation(string computer)
         {
             if (computer.ToLower().Equals("continuous"))
                 freqComputer = new ContinuousComputer(maxAngle);

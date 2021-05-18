@@ -2,7 +2,6 @@
 using UnityEngine;
 using wallSystem;
 using Debug = UnityEngine.Debug;
-
 using DS = data.DataSingleton;
 using L = main.Loader;
 
@@ -31,7 +30,7 @@ public class GenerateEnclosureFromFile : MonoBehaviour
                 else if (col == 's')
                 {
                     Debug.Log(x + " " + y);
-                    GameObject.Find("Participant").GetComponent<PlayerController>().ExternalStart(x, y, true);
+                    GameObject.Find("Participant").GetComponent<PlayerController>().ExternalStart(x, y, 0.5f,true);
                 }
                 else if (col != '0')
                 {
