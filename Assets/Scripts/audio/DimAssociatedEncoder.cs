@@ -1,11 +1,7 @@
-﻿using UnityEngine;
-
-namespace audio
+﻿namespace audio
 {
     public class DimAssociatedEncoder : SSAudioGeneration
     {
-        private float angle;
-
         protected override void initStereo(bool stereo)
         {
         }
@@ -14,6 +10,7 @@ namespace audio
         void Awake()
         {
             init();
+            angleComputer = new ThreeDComputer();
         }
 
         // Update is called once per frame
@@ -35,8 +32,8 @@ namespace audio
                     puredataInstance.SendFloat("hits", 0);
                     previousPointsTarget = false;
                 }
-                userToTargetVector = target.transform.position - transform.position;
-                angle = Vector3.Angle(userToTargetVector, transform.forward);
+                computeOTvector();
+                computeAngle();
 
                 if (angle < maxAngle)
                 {

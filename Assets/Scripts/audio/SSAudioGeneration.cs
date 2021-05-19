@@ -7,7 +7,6 @@ namespace audio
     public abstract class SSAudioGeneration : MonoBehaviour
     {
         #region properties
-        public const int HIGH_FREQ = 440, LOW_FREQ = 110, MED_FREQ = 220;
         protected float angleThreshold,maxAngle;
         protected const float GAIN_MIN = 1.0f / 127.0f, GAIN_MAX = 3.0f / 127.0f;
         protected float distanceMax;
@@ -23,9 +22,11 @@ namespace audio
         protected Ray pointedDirection;
         protected RaycastHit hit;
         protected bool pointsTarget, previousPointsTarget;
+        protected float angle;
         protected float distance;
         protected float frequency,previousFrequency,gain, previousGain;
 
+        protected AngleComputer angleComputer;
         protected FrequencyComputer freqComputer;
         #endregion
 
@@ -50,12 +51,27 @@ namespace audio
             initStereo(audioData.stereo);
         }
 
-        protected void setFrequencyComputation(string computer)
+        private void setFrequencyComputation(string computer)
         {
             if (computer.Equals("continuous"))
                 freqComputer = new ContinuousComputer(maxAngle);
             if (computer.Equals("discrete"))
                 freqComputer = new DiscreteComputer(angleThreshold);
+        }
+
+        protected void computeOTvector()
+        {
+            userToTargetVector = target.transform.position - transform.position;
+        }
+
+        private void computeOPvector()
+        {
+            pointedDirection = new Ray(transform.position, transform.forward);
+        }
+
+        protected void computeAngle()
+        {
+            angle = angleComputer.compute(userToTargetVector, transform.forward);
         }
 
         protected abstract void initStereo(bool stereo);
@@ -74,7 +90,7 @@ namespace audio
 
         private void FixedUpdate()
         {
-            pointedDirection = new Ray(transform.position, transform.forward);
+            computeOPvector();
             pointsTarget = targetCollider.Raycast(pointedDirection, out hit, 1000);
         }
 
@@ -108,47 +124,11 @@ namespace audio
             else
             {
                 frequency = freqComputer.computeFrequency(Mathf.Abs(signedAngle));
-                if (frequency > HIGH_FREQ)
-                    frequency = HIGH_FREQ;
+                if (frequency > AudioConstants.HIGH_FREQ)
+                    frequency = AudioConstants.HIGH_FREQ;
             }
         }
 
-        protected interface FrequencyComputer
-        {
-            float computeFrequency(float angle);
-        }
-
-        private class ContinuousComputer : FrequencyComputer
-        {
-            protected float k, b;
-            public ContinuousComputer(float maxAngle)
-            {
-                k = Mathf.Log(Mathf.Pow(0.25f, 1.0f / Mathf.Log(maxAngle)));
-                b = Mathf.Log(HIGH_FREQ);
-            }
-
-            public float computeFrequency(float angle)
-            {
-                return Mathf.Exp(k * Mathf.Log(angle) + b);
-            }
-        }
-
-        private class DiscreteComputer : FrequencyComputer
-        {
-            float threshold;
-            public DiscreteComputer(float threshold)
-            {
-                this.threshold = threshold;
-            }
-
-            public float computeFrequency(float angle)
-            {
-                if (angle < threshold)
-                    return HIGH_FREQ;
-                else return LOW_FREQ;
-            }
-
-        }
-
+        
     }
 }

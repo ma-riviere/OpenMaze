@@ -202,7 +202,7 @@ namespace wallSystem
 
         private void FixedUpdate()
         {
-            mover.setRotation();
+            mover.rotate();
             _controller.Move(mover.computeMotion());
         }
 
@@ -219,6 +219,13 @@ namespace wallSystem
                 transform = t;
             }
             public abstract void fixToPlane(Vector3 v);
+
+            public void rotate()
+            {
+                setRotation();
+                twoDtoQuaternionRotation();
+            }
+
             public Vector3 computeMotion()
             {
                 motion.Set(getSideMotion(), 0, Input.GetAxis("Vertical"));
@@ -227,7 +234,7 @@ namespace wallSystem
 
             protected abstract float getSideMotion();
 
-            public abstract void setRotation();
+            protected abstract void setRotation();
 
             protected void twoDtoQuaternionRotation()
             {
@@ -259,10 +266,9 @@ namespace wallSystem
                 transform.position = new Vector3(transform.position.x, v.y, transform.position.z);
             }
 
-            public override void setRotation()
+            protected override void setRotation()
             {
                 setXcurrentRotation();
-                twoDtoQuaternionRotation();
             }
 
             protected override float getSideMotion()
@@ -282,10 +288,9 @@ namespace wallSystem
                 r.Set(transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.x);
             }
 
-            public override void setRotation()
+            protected override void setRotation()
             {
                 setYcurrentRotation();
-                twoDtoQuaternionRotation();
             }
 
             protected override float getSideMotion()
@@ -302,11 +307,10 @@ namespace wallSystem
             {
             }
 
-            public override void setRotation()
+            protected override void setRotation()
             {
                 setXcurrentRotation();
                 setYcurrentRotation();
-                twoDtoQuaternionRotation();
             }
 
             protected override float getSideMotion()

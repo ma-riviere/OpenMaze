@@ -1,35 +1,15 @@
-﻿using UnityEngine;
-
-namespace audio
+﻿namespace audio
 {
-    public class VerticalEncoder : SSAudioGeneration
+    public class VerticalEncoder : OneDEncoder
     {
-        public float screenCenterY;
-        public Vector3 verticalPointedDirection, targetCenterOnScreen, verticalScreenPoint;
-        private float verticalAngle;
-
-        void Awake()
+        private void Awake()
         {
             init();
-            targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint = new Vector3(targetCenterOnScreen.x, Cam.pixelHeight / 2, targetCenterOnScreen.z);
+            angleComputer = new VerticalComputer(Cam, target);
         }
-
-        protected override void initStereo(bool stereo)
-        {
-        }
-
         void Update()
         {
-            userToTargetVector = target.transform.position - transform.position;
-            targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint.x = targetCenterOnScreen.x;
-            verticalScreenPoint.z = targetCenterOnScreen.z;
-            verticalPointedDirection = Cam.ScreenPointToRay(verticalScreenPoint).direction;
-            verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
-            setFrequency(verticalAngle);
-            puredataInstance.SendFloat("freq", frequency);
+            compute();
         }
-
     }
 }

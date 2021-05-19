@@ -1,20 +1,16 @@
-﻿using UnityEngine;
-
-namespace audio
+﻿namespace audio
 {
     public class DimDissociatedEncoder : SSAudioGeneration
     {
-        public float screenCenterY;
-        public Vector3 verticalPointedDirection, targetCenterOnScreen,verticalScreenPoint;
-        private Vector2 userToTargetHorizontalVector, horizontalPointedDirection;
-        private float horizontalAngle, verticalAngle;
+        private AngleComputer horizontalComputer;
+        private float horizontalAngle;
         protected bool previousLeft, previousRight;
 
         void Awake()
         {
             init();
-            targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint = new Vector3(targetCenterOnScreen.x, Cam.pixelHeight / 2, targetCenterOnScreen.z);
+            angleComputer = new VerticalComputer(Cam, target);
+            horizontalComputer = new HorizontalComputer();
         }
 
         protected override void initStereo(bool stereo)
@@ -43,7 +39,8 @@ namespace audio
                     previousPointsTarget = false;
                 }
 
-                userToTargetVector = target.transform.position - transform.position;
+                computeOTvector();
+                computeAngle();
                 setStereo();
                 setFrequency();
                 setContinuousGain();
@@ -52,9 +49,7 @@ namespace audio
 
         void setStereo()
         {
-            userToTargetHorizontalVector.Set(userToTargetVector.x, userToTargetVector.z);
-            horizontalPointedDirection.Set(transform.forward.x, transform.forward.z);
-            horizontalAngle = Vector2.SignedAngle(userToTargetHorizontalVector, horizontalPointedDirection);
+            horizontalAngle = horizontalComputer.compute(userToTargetVector, transform.forward);
             if (horizontalAngle < maxAngle && horizontalAngle > -angleThreshold)
             {
                 if (!previousRight)
@@ -84,15 +79,8 @@ namespace audio
         }
 
         void setFrequency()
-        {
-            targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint.x = targetCenterOnScreen.x;
-            verticalScreenPoint.z = targetCenterOnScreen.z;
-            verticalPointedDirection = Cam.ScreenPointToRay(verticalScreenPoint).direction;
-            verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
-
-            setFrequency(verticalAngle);
-
+        {   
+            setFrequency(angle);
             if (frequency != previousFrequency)
             {
                 puredataInstance.SendFloat("freq", frequency);
