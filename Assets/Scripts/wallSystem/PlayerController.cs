@@ -23,7 +23,6 @@ namespace wallSystem
         // This is the character controller system used for collision
         private CharacterController _controller;
         // The initial move direction is static zero.
-        private Vector3 _moveDirection = Vector3.zero;
         private float _currDelay;
         private float _iniRotation;
         private float _waitTime;
@@ -31,11 +30,7 @@ namespace wallSystem
         private bool _reset;
         private int localQuota;
 
-        private float movSpeed;
-        public float sensitivity = 1f;
-        public float maxYAngle = 90f, minYAngle = -90f;
-        private Vector2 currentRotation;
-        string encoder;
+        Mover mover;
         #endregion
 
         private void Start()
@@ -97,18 +92,15 @@ namespace wallSystem
             TrialProgress.GetCurrTrial().TrialProgress.TargetY = 0;
 
             _isStarted = true;
-
-            movSpeed = DS.GetData().CharacterData.MovementSpeed;
-            encoder = DS.GetData().AudioData.encoder.ToLower();
         }
 
         // Start the character. If init from enclosure, this allows "s" to determine the start position
-        public void ExternalStart(float pickX, float pickZ, float pickY=0,bool useEnclosure = false)
+        public void ExternalStart(Vector3 pick, bool useEnclosure = false)
         {
             while (!_isStarted)
                 Thread.Sleep(20);
-            TrialProgress.GetCurrTrial().TrialProgress.TargetX = pickX;
-            TrialProgress.GetCurrTrial().TrialProgress.TargetY = pickZ;
+            TrialProgress.GetCurrTrial().TrialProgress.TargetX = pick.x;
+            TrialProgress.GetCurrTrial().TrialProgress.TargetY = pick.z;
             // No start pos specified so make it random.
             if (E.Get().CurrTrial.trialData.StartPosition.Count == 0)
             {
@@ -119,7 +111,7 @@ namespace wallSystem
                 {
                     var CurrentTrialRadius = DS.GetData().Enclosures[E.Get().CurrTrial.TrialProgress.CurrentEnclosureIndex].Radius;
                     var v = Random.insideUnitCircle * CurrentTrialRadius * 0.9f;
-                    var mag = Vector3.Distance(v, new Vector2(pickX, pickZ));
+                    var mag = Vector3.Distance(v, new Vector2(pick.x, pick.z));
                     if (mag > DS.GetData().CharacterData.DistancePickup)
                     {
                         transform.position = new Vector3(v.x, DS.GetData().CharacterData.Height, v.y);
@@ -133,17 +125,21 @@ namespace wallSystem
             {
                 var p = E.Get().CurrTrial.trialData.StartPosition;
                 if (useEnclosure)
-                    p = new List<float>() { pickX, pickZ };
+                    p = new List<float>() { pick.x, pick.z };
                 transform.position = new Vector3(p[0], DS.GetData().CharacterData.Height, p[1]);
             }
             Cam.transform.localPosition = _controller.center = Vector3.zero;
             _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
 
+            DS.GetData().AudioData.encoder = DS.GetData().AudioData.encoder.ToLower();
             SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData);
-            if (encoder.Equals("horizontal"))
-                transform.position = new Vector3(transform.position.x, pickY, transform.position.z);
-            else if (encoder.Equals("vertical"))
-                transform.rotation.SetLookRotation(new Vector3(pickX, 0, pickZ) - new Vector3(transform.position.x, (Random.value-0.5f)*2, transform.position.z));
+            switch (DS.GetData().AudioData.encoder)
+            {
+                case "horizontal": mover = new HorizontalMover(transform); break;
+                case "vertical": mover = new VerticalMover(transform); break;
+                default: mover = new ThreeDMover(transform); break;
+            }
+            mover.fixToPlane(pick);
         }
 
         // This is the collision system.
@@ -176,23 +172,18 @@ namespace wallSystem
             // Smooth out the rotation as we approach the values
             var threshold1 = Math.Abs(_currDelay / _waitTime - 0.25f);
             var threshold2 = Math.Abs(_currDelay / _waitTime - 0.75f);
-
             if (threshold1 < 0.03 || threshold2 < 0.03)
                 return;
-
             if (_currDelay / _waitTime > 0.25 && _currDelay / _waitTime < 0.75)
                 multiplier *= -1;
             var anglePerSecond = 240 / _waitTime;
             var angle = Time.deltaTime * anglePerSecond;
             transform.Rotate(new Vector3(0, multiplier * angle, 0));
-
-
         }
 
         private void Update()
         {
             E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
-            //updateAudio();
             // This first block is for the initial rotation of the character
             if (_currDelay < _waitTime)
                 doInitialRotation();
@@ -211,36 +202,118 @@ namespace wallSystem
 
         private void FixedUpdate()
         {
-            _moveDirection.Set(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-            _moveDirection = transform.TransformDirection(_moveDirection) * movSpeed;
-            switch (encoder)
+            mover.setRotation();
+            _controller.Move(mover.computeMotion());
+        }
+
+        private abstract class Mover
+        {
+            protected Transform transform;
+            private Vector3 motion=Vector3.zero;
+            protected Vector2 r=Vector2.zero;
+            private float speed;
+            private float maxYAngle = 90f, minYAngle = -90f;
+            protected Mover(Transform t)
             {
-                case "associated":
-                case "dissociated":
-                    setXcurrentRotation();
-                    setYcurrentRotation();
-                    break;
-                case "horizontal":
-                    setXcurrentRotation(); ; break;
-                case "vertical":
-                    setYcurrentRotation(); break;
+                speed =  DS.GetData().CharacterData.MovementSpeed;
+                transform = t;
             }
-            _controller.Move(_moveDirection * Time.deltaTime);
-            transform.rotation = Quaternion.Euler(currentRotation.y, currentRotation.x, 0);
+            public abstract void fixToPlane(Vector3 v);
+            public Vector3 computeMotion()
+            {
+                motion.Set(getSideMotion(), 0, Input.GetAxis("Vertical"));
+                return transform.TransformDirection(motion) * speed * Time.deltaTime;
+            }
+
+            protected abstract float getSideMotion();
+
+            public abstract void setRotation();
+
+            protected void twoDtoQuaternionRotation()
+            {
+                transform.rotation = Quaternion.Euler(r.y, r.x, 0);
+            }
+
+            protected void setXcurrentRotation()
+            {
+                r.x += Input.GetAxis("Mouse X");
+                r.x = Mathf.Repeat(r.x, 360);
+            }
+
+            protected void setYcurrentRotation()
+            {
+                r.y -= Input.GetAxis("Mouse Y");
+                r.y = Mathf.Clamp(r.y, minYAngle, maxYAngle);
+            }
+
         }
 
-        void setXcurrentRotation()
+        private class HorizontalMover : Mover
         {
-            currentRotation.x += Input.GetAxis("Mouse X") * sensitivity;
-            currentRotation.x = Mathf.Repeat(currentRotation.x, 360);
+            public HorizontalMover(Transform t):base(t)
+            {
+            }
+
+            public override void fixToPlane(Vector3 v)
+            {
+                transform.position = new Vector3(transform.position.x, v.y, transform.position.z);
+            }
+
+            public override void setRotation()
+            {
+                setXcurrentRotation();
+                twoDtoQuaternionRotation();
+            }
+
+            protected override float getSideMotion()
+            {
+                return Input.GetAxis("Horizontal");
+            }
+
+            
         }
 
-        void setYcurrentRotation()
+        private class VerticalMover : Mover
         {
-            currentRotation.y -= Input.GetAxis("Mouse Y") * sensitivity;
-            currentRotation.y = Mathf.Clamp(currentRotation.y, minYAngle, maxYAngle);
+            public VerticalMover(Transform t) : base(t) { }
+            public override void fixToPlane(Vector3 v)
+            {
+                transform.LookAt(new Vector3(v.x, Random.value * 3, v.z));
+                r.Set(transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.x);
+            }
+
+            public override void setRotation()
+            {
+                setYcurrentRotation();
+                twoDtoQuaternionRotation();
+            }
+
+            protected override float getSideMotion()
+            {
+                return 0;
+            }
         }
 
+        private class ThreeDMover : Mover
+        {
+            public ThreeDMover(Transform t) : base(t) { }
+
+            public override void fixToPlane(Vector3 v)
+            {
+            }
+
+            public override void setRotation()
+            {
+                setXcurrentRotation();
+                setYcurrentRotation();
+                twoDtoQuaternionRotation();
+            }
+
+            protected override float getSideMotion()
+            {
+                return Input.GetAxis("Horizontal");
+            }
+        }
 
     }
 }

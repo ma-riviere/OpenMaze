@@ -151,8 +151,8 @@ namespace wallSystem
 
                 _destroy.Add(obj);
             }
-
-            GameObject.Find("Participant").GetComponent<PlayerController>().ExternalStart(p.X, p.Z, p.Y);
+            UnityEngine.Debug.Log(p.X+" "+ p.Y+" "+ p.Z);
+            GameObject.Find("Participant").GetComponent<PlayerController>().ExternalStart(new Vector3(p.X,p.Y,p.Z));
         }
 
         //And here we destroy all the food.

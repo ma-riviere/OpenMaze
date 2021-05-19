@@ -6,6 +6,7 @@ namespace audio
 {
     public abstract class SSAudioGeneration : MonoBehaviour
     {
+        #region properties
         public const int HIGH_FREQ = 440, LOW_FREQ = 110, MED_FREQ = 220;
         protected float angleThreshold,maxAngle;
         protected const float GAIN_MIN = 1.0f / 127.0f, GAIN_MAX = 3.0f / 127.0f;
@@ -26,14 +27,16 @@ namespace audio
         protected float frequency,previousFrequency,gain, previousGain;
 
         protected FrequencyComputer freqComputer;
+        #endregion
 
         public static void addSelectedAudioEncoder(Data.Audio audioData)
         {
-            switch (audioData.encoder.ToLower())
+            switch (audioData.encoder)
             {
                 case "dissociated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimDissociatedEncoder>();break;
                 case "associated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimAssociatedEncoder>(); break;
                 case "horizontal": FindObjectOfType<PlayerController>().gameObject.AddComponent<HorizontalEncoder>(); break;
+                case "vertical": FindObjectOfType<PlayerController>().gameObject.AddComponent<VerticalEncoder>(); break;
             }
             FindObjectOfType<PlayerController>().gameObject.GetComponent<SSAudioGeneration>().setParams(audioData);
         }
@@ -44,18 +47,23 @@ namespace audio
             maxAngle = audioData.maxAngle;
             distanceMax = audioData.distanceMax;
             setFrequencyComputation(audioData.frequencyComputer);
-            setStereo(audioData.stereo);
+            initStereo(audioData.stereo);
         }
 
-        protected abstract void setStereo(bool stereo);
+        protected void setFrequencyComputation(string computer)
+        {
+            if (computer.Equals("continuous"))
+                freqComputer = new ContinuousComputer(maxAngle);
+            if (computer.Equals("discrete"))
+                freqComputer = new DiscreteComputer(angleThreshold);
+        }
 
-        public abstract void setFrequencyComputation(string computer);
+        protected abstract void initStereo(bool stereo);
 
         protected void init()
         {
             Cam = GetComponent<PlayerController>().Cam;
             puredataInstance = GetComponent<LibPdInstance>();
-            //kGain = -GAIN_MIN;
             kGain = Mathf.Log(Mathf.Pow(1.0F / 3.0f, 1.0f / (Mathf.Log(distanceMax) - Mathf.Log(0.01f))));
             b = Mathf.Exp(-kGain * Mathf.Log(distanceMax)) / 127;
             frequency = 0;
@@ -93,13 +101,24 @@ namespace audio
             //Debug.Log(distance);
         }
 
-        public abstract class FrequencyComputer
+        protected void setFrequency(float signedAngle)
         {
-            protected FrequencyComputer() { }
-            public abstract float computeFrequency(float angle, float criterium);
+            if (signedAngle > maxAngle)
+                frequency = 0;
+            else
+            {
+                frequency = freqComputer.computeFrequency(Mathf.Abs(signedAngle));
+                if (frequency > HIGH_FREQ)
+                    frequency = HIGH_FREQ;
+            }
         }
 
-        protected class ContinuousComputer : FrequencyComputer
+        protected interface FrequencyComputer
+        {
+            float computeFrequency(float angle);
+        }
+
+        private class ContinuousComputer : FrequencyComputer
         {
             protected float k, b;
             public ContinuousComputer(float maxAngle)
@@ -108,10 +127,27 @@ namespace audio
                 b = Mathf.Log(HIGH_FREQ);
             }
 
-            public override float computeFrequency(float angle, float criterium)
+            public float computeFrequency(float angle)
             {
                 return Mathf.Exp(k * Mathf.Log(angle) + b);
             }
+        }
+
+        private class DiscreteComputer : FrequencyComputer
+        {
+            float threshold;
+            public DiscreteComputer(float threshold)
+            {
+                this.threshold = threshold;
+            }
+
+            public float computeFrequency(float angle)
+            {
+                if (angle < threshold)
+                    return HIGH_FREQ;
+                else return LOW_FREQ;
+            }
+
         }
 
     }

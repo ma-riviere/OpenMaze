@@ -13,21 +13,12 @@ namespace audio
         void Awake()
         {
             init();
-            screenCenterY = Cam.pixelHeight/2;
-            verticalScreenPoint = new Vector3(targetCenterOnScreen.x, screenCenterY, targetCenterOnScreen.z);
+            targetCenterOnScreen = Cam.WorldToScreenPoint(target.transform.position);
+            verticalScreenPoint = new Vector3(targetCenterOnScreen.x, Cam.pixelHeight / 2, targetCenterOnScreen.z);
         }
 
-        protected override void setStereo(bool stereo)
+        protected override void initStereo(bool stereo)
         {
-            throw new System.NotImplementedException();
-        }
-
-        public override void setFrequencyComputation(string computer)
-        {
-            if (computer.ToLower().Equals("continuous"))
-                freqComputer = new ContinuousComputer(maxAngle);
-            if (computer.ToLower().Equals("discrete")) 
-                freqComputer = new DiscreteComputer(angleThreshold, screenCenterY);
         }
 
         private void Update()
@@ -100,30 +91,12 @@ namespace audio
             verticalPointedDirection = Cam.ScreenPointToRay(verticalScreenPoint).direction;
             verticalAngle = Vector3.Angle(userToTargetVector, verticalPointedDirection);
 
-            frequency = freqComputer.computeFrequency(verticalAngle, targetCenterOnScreen.y);
+            setFrequency(verticalAngle);
 
             if (frequency != previousFrequency)
             {
                 puredataInstance.SendFloat("freq", frequency);
                 previousFrequency = frequency;
-            }
-        }
-
-        private class DiscreteComputer : FrequencyComputer
-        {
-            float threshold, screenCenterY;
-            public DiscreteComputer(float threshold,float screenCenterY)
-            {
-                this.threshold = threshold;
-                this.screenCenterY = screenCenterY;
-            }
-            public override float computeFrequency(float angle,float criterium)
-            {
-                if (angle < threshold)
-                    return MED_FREQ;
-                else if (criterium < screenCenterY)
-                    return LOW_FREQ;
-                else return HIGH_FREQ;
             }
         }
 

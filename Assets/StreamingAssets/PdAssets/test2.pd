@@ -26,9 +26,10 @@
 #X obj 502 335 *~;
 #X obj 465 222 lop~ 220;
 #X obj 461 274 *~ 0.25;
-#X msg 8 46 \; freq 110 \; gain 1 \; left 0 \; right 0 \; hits 0;
 #X obj 380 129 pack 0 50;
-#X connect 0 0 27 0;
+#X msg 8 46 \; freq 110 \; gain 1 \; left 0.5 \; right 0.5 \; hits
+0;
+#X connect 0 0 28 0;
 #X connect 1 0 8 0;
 #X connect 3 0 22 0;
 #X connect 4 0 6 0;
@@ -40,7 +41,7 @@
 #X connect 10 0 20 0;
 #X connect 11 0 24 1;
 #X connect 12 0 25 0;
-#X connect 13 0 28 0;
+#X connect 13 0 27 0;
 #X connect 14 0 16 0;
 #X connect 14 0 17 0;
 #X connect 15 0 14 1;
@@ -58,4 +59,4 @@
 #X connect 24 0 2 1;
 #X connect 25 0 26 0;
 #X connect 26 0 24 0;
-#X connect 28 0 15 0;
+#X connect 27 0 15 0;
