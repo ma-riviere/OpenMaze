@@ -132,7 +132,7 @@ namespace wallSystem
             _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
 
             DS.GetData().AudioData.encoder = DS.GetData().AudioData.encoder.ToLower();
-            SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData);
+            SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData,_controller);
             switch (DS.GetData().AudioData.encoder)
             {
                 case "horizontal": mover = new HorizontalMover(transform); break;
@@ -236,7 +236,7 @@ namespace wallSystem
 
             protected abstract void setRotation();
 
-            protected void twoDtoQuaternionRotation()
+            private void twoDtoQuaternionRotation()
             {
                 transform.rotation = Quaternion.Euler(r.y, r.x, 0);
             }
