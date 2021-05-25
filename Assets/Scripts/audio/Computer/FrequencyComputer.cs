@@ -5,7 +5,7 @@ namespace audio.Computer
     public abstract class FrequencyComputer
     {
         protected float maxAngle, minAngle;
-        public const int HIGH_FREQ = 440, LOW_FREQ = 110;
+        public const int HIGH_FREQ = 440, MED_FREQ=220,LOW_FREQ = 110;
 
         protected FrequencyComputer(float maxA)
         {
@@ -13,6 +13,22 @@ namespace audio.Computer
             minAngle = -maxA;
         }
         public abstract float computeFrequency(float angle);
+    }
+
+    public class ConstantComputer : FrequencyComputer
+    {
+        private float freq;
+        public ConstantComputer(float maxA,float f):base(maxA)
+        {
+            freq = f;
+        }
+
+        public override float computeFrequency(float angle)
+        {
+            if (angle > maxAngle || angle < minAngle)
+                return 0;
+            else return freq;
+        }
     }
 
     public class ContinuousComputer : FrequencyComputer

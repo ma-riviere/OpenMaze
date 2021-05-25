@@ -14,6 +14,8 @@
 
     "AudioData":{
         "encoder":"dissociated",
+        "goodDir":true,
+        "stereo":true,
         "maxAngle":80,
         "angleThreshold":15,
         "frequencyComputer":"continuous"

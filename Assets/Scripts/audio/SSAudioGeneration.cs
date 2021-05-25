@@ -8,26 +8,25 @@ namespace audio
     public abstract class SSAudioGeneration : MonoBehaviour
     {
         #region properties
-        private const float GAIN_MIN = 1.0f / 127.0f, GAIN_MAX = 3.0f / 127.0f;
-        private float distanceMax;
-        private float kGain, b;
+        private AudioInterface puredataInstance;
+        protected GameObject target;
+        protected SphereCollider targetCollider;
+        protected CharacterController coll;
 
-        protected PureDataSender puredataInstance;
-        private GameObject target;
-        private SphereCollider targetCollider;
-        private Collider coll;
-
-        protected Vector3 userToTargetVector;
-        protected Ray pointedDirection;
-        private RaycastHit hit;
-        protected bool pointsTarget, previousPointsTarget;
-        protected float angle;
-        private float distance;
-        private float frequency, gain, previousGain;
-
+        protected AbstractComputer goodDirectionComputer;
         protected AngleComputer angleComputer;
         protected FrequencyComputer freqComputer;
         protected StereoMono stereoMonoInterface;
+        protected NoiseInterface noise;
+        protected GainComputer gainComputer;
+
+        protected Vector3 userToTargetVector;
+        protected float angle;
+        protected float distance;
+        protected bool pointsTarget;
+
+        protected float frequency, gain, previousGain;
+        
         #endregion
 
         public static void addSelectedAudioEncoder(Data.Audio audioData, CharacterController cc)
@@ -42,17 +41,34 @@ namespace audio
             FindObjectOfType<PlayerController>().gameObject.GetComponent<SSAudioGeneration>().setParams(audioData, cc);
         }
 
-        void setParams(Data.Audio audioData, CharacterController cc)
+        private void setParams(Data.Audio audioData, CharacterController cc)
         {
             switch (audioData.frequencyComputer)
             {
                 case "continuous": freqComputer = new ContinuousComputer(audioData.maxAngle); break;
                 case "discrete": freqComputer = new DiscreteComputer(audioData.maxAngle, audioData.angleThreshold); break;
             }
-            distanceMax = audioData.distanceMax;
-            if (audioData.stereo)
+            switch (audioData.gainComputer)
+            {
+                case "continuous": gainComputer = new ContinuousGainComputer(audioData.distanceMax); break;
+                case "discrete": gainComputer = new DiscreteGainComputer(audioData.distanceMax); break;
+            }
+            if ((audioData.encoder.Equals("dissociated") || audioData.encoder.Equals("horizontal")) && audioData.stereo)
+            {
                 stereoMonoInterface = new StereoInterface(true, audioData.maxAngle, puredataInstance);
+                if (audioData.encoder.Equals("horizontal"))
+                    freqComputer = new ConstantComputer(audioData.maxAngle,FrequencyComputer.MED_FREQ);
+            }
             else stereoMonoInterface = new MonoInterface();
+            if (audioData.goodDir)
+            {
+                goodDirectionComputer = new GoodDirectionComputer(targetCollider);
+                noise = new Noise(puredataInstance);
+            }
+            else {
+                goodDirectionComputer = new VoidComputer();
+                noise = new Void();
+            }
             coll = cc;
         }
 
@@ -65,8 +81,8 @@ namespace audio
         private void init()
         {
             puredataInstance = new PureDataSender(GetComponent<LibPdInstance>());
-            kGain = Mathf.Log(Mathf.Pow(1.0F / 3.0f, 1.0f / (Mathf.Log(distanceMax) - Mathf.Log(0.01f))));
-            b = Mathf.Exp(-kGain * Mathf.Log(distanceMax)) / 127;
+            //kGain = Mathf.Log(Mathf.Pow(1.0F / 3.0f, 1.0f / (Mathf.Log(distanceMax) - Mathf.Log(0.01f))));
+            //b = Mathf.Exp(-kGain * Mathf.Log(distanceMax)) / 127;
             frequency = 0;
             target = GameObject.FindWithTag("Pickup");
             targetCollider = target.GetComponent<SphereCollider>();
@@ -74,25 +90,19 @@ namespace audio
 
         protected abstract void selectAngleComputing();
 
+        private void FixedUpdate()
+        {
+            pointsTarget = goodDirectionComputer.pointsTarget(transform.position, transform.forward);
+        }
+
         protected void computeOTvector()
         {
             userToTargetVector = targetCollider.ClosestPoint(transform.position) - coll.ClosestPoint(target.transform.position);
         }
 
-        private void computeOPvector()
-        {
-            pointedDirection = new Ray(transform.position, transform.forward);
-        }
-
         protected void computeAngle()
         {
             angle = angleComputer.compute(userToTargetVector, transform.forward);
-        }
-
-        private void FixedUpdate()
-        {
-            computeOPvector();
-            pointsTarget = targetCollider.Raycast(pointedDirection, out hit, 1000);
         }
 
         private void LateUpdate()
@@ -111,13 +121,10 @@ namespace audio
             puredataInstance.setFreq(frequency);
         }
 
-        protected void setContinuousGain()
+        protected void setGain()
         {
             distance = userToTargetVector.magnitude;
-            if (distance < distanceMax)
-                gain = GAIN_MAX;
-            else
-                gain = GAIN_MIN;
+            gain = gainComputer.compute(distance);
             if (previousGain != gain)
             {
                 puredataInstance.setGain(gain);

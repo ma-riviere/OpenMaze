@@ -2,28 +2,20 @@
 {
     public abstract class TwoDimEncoder : SSAudioGeneration
     {
+        
         void Update()
         {
             if (pointsTarget)
             {
-                if (!previousPointsTarget)
-                {
-                    puredataInstance.setHits(0.5f);
-                    previousPointsTarget = true;
-                    puredataInstance.setFreq(0);
-                }
+                noise.setNoise(true);
             }
             else
             {
-                if (previousPointsTarget)
-                {
-                    puredataInstance.setHits(0);
-                    previousPointsTarget = false;
-                }
+                noise.setNoise(false);
                 computeOTvector();
                 computeAngle();
                 setFrequency();
-                setContinuousGain();
+                //setGain();
                 setStereo();
             }
         }
