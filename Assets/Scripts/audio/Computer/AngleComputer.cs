@@ -22,8 +22,10 @@ namespace audio.Computer
 
     public class VerticalComputer : AngleComputer
     {
-        /*
-        private Vector3 verticalPointedDirection, targetCenterOnScreen, verticalScreenPoint;
+        
+        private Vector3 verticalPointedDirection;
+        
+        /*targetCenterOnScreen, verticalScreenPoint;
         private Camera cam;
         GameObject target;
         
@@ -36,7 +38,9 @@ namespace audio.Computer
         }
         */
         public VerticalComputer()
-        { }
+        {
+            verticalPointedDirection = new Vector3();
+        }
 
         public float compute(Vector3 OT, Vector3 OP)
         {
@@ -46,7 +50,8 @@ namespace audio.Computer
             verticalScreenPoint.z = targetCenterOnScreen.z;
             verticalPointedDirection = cam.ScreenPointToRay(verticalScreenPoint).direction;
             */
-            return Vector3.Angle(OT, new Vector3(OT.x, OP.y * OT.magnitude, OT.z));
+            verticalPointedDirection.Set(OT.x, OP.y * OT.magnitude, OT.z);
+            return Vector3.Angle(OT, verticalPointedDirection);
         }
     }
 

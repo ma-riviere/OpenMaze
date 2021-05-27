@@ -21,7 +21,7 @@
             instance.SendFloat("freq", value);
         }
 
-        public void setStereo(float right, float left)
+        public void setStereo(float left, float right)
         {
             instance.SendFloat("right", right);
             instance.SendFloat("left", left);

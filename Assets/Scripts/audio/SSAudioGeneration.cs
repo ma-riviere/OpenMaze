@@ -23,7 +23,6 @@ namespace audio
         protected Vector3 userToTargetVector;
         protected float angle;
         protected float distance;
-        protected bool pointsTarget;
 
         protected float frequency, gain, previousGain;
         
@@ -55,7 +54,9 @@ namespace audio
             }
             if ((audioData.encoder.Equals("dissociated") || audioData.encoder.Equals("horizontal")) && audioData.stereo)
             {
-                stereoMonoInterface = new StereoInterface(true, audioData.maxAngle, puredataInstance);
+                if(audioData.stereoComputer.Equals("continuous"))
+                    stereoMonoInterface = new ContinuousStereoInterface(audioData.maxAngle, puredataInstance);
+                else stereoMonoInterface = new DiscreteStereoInterface(audioData.maxAngle, audioData.angleThreshold, puredataInstance);
                 if (audioData.encoder.Equals("horizontal"))
                     freqComputer = new ConstantComputer(audioData.maxAngle,FrequencyComputer.MED_FREQ);
             }
@@ -89,11 +90,6 @@ namespace audio
         }
 
         protected abstract void selectAngleComputing();
-
-        private void FixedUpdate()
-        {
-            pointsTarget = goodDirectionComputer.pointsTarget(transform.position, transform.forward);
-        }
 
         protected void computeOTvector()
         {

@@ -191,6 +191,7 @@ namespace data
             public string frequencyComputer;
             public string gainComputer;
             public bool stereo;
+            public string stereoComputer;
             public bool goodDir;
         }
 
