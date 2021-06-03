@@ -7,6 +7,7 @@
             computeOTvector();
             computeAngle();
             setFrequency();
+            setGain();
         }
 
     }

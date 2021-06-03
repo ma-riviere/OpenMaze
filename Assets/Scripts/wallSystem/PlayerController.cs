@@ -32,6 +32,7 @@ namespace wallSystem
 
         Mover mover;
         public SSAudioGeneration ssAudio;
+        GameObject currentTarget;
         #endregion
 
         private void Start()
@@ -134,8 +135,7 @@ namespace wallSystem
             //Sets collider's radius and height values according to data. Collider is a cylinder.
             _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
 
-            SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData, _controller);
-            ssAudio = GetComponent<SSAudioGeneration>();
+            ssAudio = SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData, _controller);
             //Depending on chosen type of spatial-audio encoder, in 2 (horizontal, vertical) or 3 dimensions, constraints the movement of the character controller.
             switch (DS.GetData().AudioData.encoder)
             {
@@ -144,6 +144,7 @@ namespace wallSystem
                 default: mover = new ThreeDMover(transform); break;
             }
             mover.fixToPlane(pick);
+            GetComponent<LibPdInstance>().Bind("end");
         }
 
         // This is the collision system.
@@ -152,7 +153,13 @@ namespace wallSystem
             if (!other.gameObject.CompareTag("Pickup")) return;
 
             ssAudio.playReachedTargetAudio();
-            Destroy(other.gameObject);
+            currentTarget = other.gameObject;
+        }
+
+        public void receiveEndBang(string sender)
+        {
+            Destroy(currentTarget);
+            Destroy(ssAudio);
             // Tally the number collected per current block
             int BlockID = TrialProgress.GetCurrTrial().BlockID;
             TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
@@ -169,8 +176,6 @@ namespace wallSystem
             E.Get().CurrTrial.Notify();
             E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
             TrialProgress.GetCurrTrial().Progress();
-            Thread.Sleep(1000);
-            Destroy(ssAudio);
         }
 
         private void doInitialRotation()

@@ -5,20 +5,20 @@
         private bool pointsTarget;
         private void FixedUpdate()
         {
-            pointsTarget = goodDirectionComputer.pointsTarget(transform.position, transform.forward);
+            computeOTvector();
+            pointsTarget = goodDirectionComputer.pointsTarget(transform.position, transform.forward, userToTargetVector);
         }
 
         void Update()
         {
+            setGain();
             if (pointsTarget)
                 noise.setNoise();
             else
             {
                 noise.unsetNoise();
-                computeOTvector();
                 computeAngle();
                 setFrequency();
-                setGain();
                 setStereo();
             }
         }

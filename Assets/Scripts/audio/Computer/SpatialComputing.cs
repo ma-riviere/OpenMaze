@@ -49,7 +49,7 @@ namespace audio.Computer
 
     public interface TargetDirectionComputer
     {
-        bool pointsTarget(Vector3 v1, Vector3 v2);
+        bool pointsTarget(Vector3 v1,Vector3 v2,Vector3 v3);
     }
 
     public class RayDirectionComputer : TargetDirectionComputer
@@ -63,33 +63,35 @@ namespace audio.Computer
             target = c;
         }
 
-        public bool pointsTarget(Vector3 pos, Vector3 dir)
+        public bool pointsTarget(Vector3 pos,Vector3 dir,Vector3 v)
         {
             pointedDirection.origin = pos;
             pointedDirection.direction = dir;
             return target.Raycast(pointedDirection, out hit, 1000);
         }
 
+
     }
 
     public class AngleDirectionComputer : TargetDirectionComputer
     {
         int maxAngle;
+
         public AngleDirectionComputer(int maxA)
         {
             maxAngle = maxA;
         }
 
-        public bool pointsTarget(Vector3 userToTarget, Vector3 pointedDirection)
+        public new bool pointsTarget(Vector3 pos,Vector3 dir,Vector3 userToTarget)
         {
-            return Vector3.Angle(userToTarget, pointedDirection) < maxAngle;
+            return Vector3.Angle(userToTarget, dir) < maxAngle;
         }
 
     }
 
     public class VoidComputer : TargetDirectionComputer
     {
-        public bool pointsTarget(Vector3 v1, Vector3 v2)
+        public bool pointsTarget(Vector3 v1,Vector3 v2)
         {
             return false;
         }

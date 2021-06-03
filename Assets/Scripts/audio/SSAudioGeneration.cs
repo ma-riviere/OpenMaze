@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using wallSystem;
 using data;
 using audio.Computer;
 
@@ -17,8 +16,8 @@ namespace audio
         protected AngleComputer angleComputer;
         protected FrequencyInterface freqI;
         protected StereoMono stereoMonoInterface;
-        protected NoiseInterface noise;
         protected GainInterface gainComputer;
+        protected NoiseInterface noise;
 
         protected Vector3 userToTargetVector;
         protected float angle;
@@ -27,17 +26,18 @@ namespace audio
         protected float frequency, gain;
         #endregion
 
-        public static void addSelectedAudioEncoder(Data.Audio audioData, CharacterController cc)
+        public static SSAudioGeneration addSelectedAudioEncoder(Data.Audio audioData, CharacterController cc)
         {
+            SSAudioGeneration ssA=null;
             switch (audioData.encoder)
             {
-                case "dissociated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimDissociatedEncoder>(); break;
-                case "associated": FindObjectOfType<PlayerController>().gameObject.AddComponent<DimAssociatedEncoder>(); break;
-                case "horizontal": FindObjectOfType<PlayerController>().gameObject.AddComponent<HorizontalEncoder>(); break;
-                case "vertical": FindObjectOfType<PlayerController>().gameObject.AddComponent<VerticalEncoder>(); break;
+                case "dissociated": ssA=cc.gameObject.AddComponent<DimDissociatedEncoder>(); break;
+                case "associated": ssA=cc.gameObject.AddComponent<DimAssociatedEncoder>(); break;
+                case "horizontal": ssA=cc.gameObject.AddComponent<HorizontalEncoder>(); break;
+                case "vertical": ssA=cc.gameObject.AddComponent<VerticalEncoder>(); break;
             }
-            FindObjectOfType<PlayerController>().gameObject.GetComponent<SSAudioGeneration>().setParams(audioData, cc);
-            FindObjectOfType<PlayerController>().ssAudio = FindObjectOfType<PlayerController>().gameObject.GetComponent<SSAudioGeneration>();
+            ssA.setParams(audioData, cc);
+            return ssA;
         }
 
         private void setParams(Data.Audio audioData, CharacterController cc)
@@ -64,10 +64,10 @@ namespace audio
             else stereoMonoInterface = new MonoInterface();
             switch (audioData.goodDir)
             {
-                case "angle":goodDirectionComputer = new RayDirectionComputer(targetCollider); 
+                case "angle":goodDirectionComputer = new AngleDirectionComputer(audioData.margin); 
                     noise = new Noise();
                     break;
-                case "target":goodDirectionComputer = new AngleDirectionComputer(audioData.margin);
+                case "onTarget":goodDirectionComputer = new RayDirectionComputer(targetCollider);
                     noise = new Noise();
                     break;
                 default:
@@ -122,7 +122,6 @@ namespace audio
         {
             audioInstance.setHits(0);
             audioInstance.setFreq(0);
-            audioInstance.setStereo(0.5f, 0.5f);
             audioInstance.setComplete();
         }
 
