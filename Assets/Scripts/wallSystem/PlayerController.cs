@@ -31,6 +31,7 @@ namespace wallSystem
         private int localQuota;
 
         Mover mover;
+        public SSAudioGeneration ssAudio;
         #endregion
 
         private void Start()
@@ -128,11 +129,14 @@ namespace wallSystem
                     p = new List<float>() { pick.x, pick.z };
                 transform.position = new Vector3(p[0], DS.GetData().CharacterData.Height, p[1]);
             }
+            //Set camera and collider positions to GameObject position.
             Cam.transform.localPosition = _controller.center = Vector3.zero;
+            //Sets collider's radius and height values according to data. Collider is a cylinder.
             _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
 
-            DS.GetData().AudioData.encoder = DS.GetData().AudioData.encoder.ToLower();
-            SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData,_controller);
+            SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData, _controller);
+            ssAudio = GetComponent<SSAudioGeneration>();
+            //Depending on chosen type of spatial-audio encoder, in 2 (horizontal, vertical) or 3 dimensions, constraints the movement of the character controller.
             switch (DS.GetData().AudioData.encoder)
             {
                 case "horizontal": mover = new HorizontalMover(transform); break;
@@ -147,6 +151,7 @@ namespace wallSystem
         {
             if (!other.gameObject.CompareTag("Pickup")) return;
 
+            ssAudio.playReachedTargetAudio();
             Destroy(other.gameObject);
             // Tally the number collected per current block
             int BlockID = TrialProgress.GetCurrTrial().BlockID;
@@ -164,6 +169,8 @@ namespace wallSystem
             E.Get().CurrTrial.Notify();
             E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
             TrialProgress.GetCurrTrial().Progress();
+            Thread.Sleep(1000);
+            Destroy(ssAudio);
         }
 
         private void doInitialRotation()
@@ -209,15 +216,16 @@ namespace wallSystem
         private abstract class Mover
         {
             protected Transform transform;
-            private Vector3 motion=Vector3.zero;
-            protected Vector2 r=Vector2.zero;
+            private Vector3 motion = Vector3.zero;
+            protected Vector2 r = Vector2.zero;
             private float speed;
             private float maxYAngle = 90f, minYAngle = -90f;
             protected Mover(Transform t)
             {
-                speed =  DS.GetData().CharacterData.MovementSpeed;
+                speed = DS.GetData().CharacterData.MovementSpeed;
                 transform = t;
             }
+
             public abstract void fixToPlane(Vector3 v);
 
             public void rotate()
@@ -257,7 +265,7 @@ namespace wallSystem
 
         private class HorizontalMover : Mover
         {
-            public HorizontalMover(Transform t):base(t)
+            public HorizontalMover(Transform t) : base(t)
             {
             }
 
@@ -276,7 +284,7 @@ namespace wallSystem
                 return Input.GetAxis("Horizontal");
             }
 
-            
+
         }
 
         private class VerticalMover : Mover

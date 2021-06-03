@@ -14,11 +14,14 @@
 
     "AudioData":{
         "encoder":"dissociated",
-        "goodDir":true,
+        "goodDir":"target",
         "stereo":true,
         "maxAngle":80,
         "angleThreshold":15,
-        "frequencyComputer":"continuous"
+        "distanceMax":2,
+        "frequencyComputer":"discrete",
+        "gainComputer":"discrete",
+        "stereoComputer":"discrete"
     },
     
     "BLOCK DATA": "BLOCK DATA---------------------*********--------------------BLOCK DATA",

@@ -151,7 +151,6 @@ namespace wallSystem
 
                 _destroy.Add(obj);
             }
-            UnityEngine.Debug.Log(p.X+" "+ p.Y+" "+ p.Z);
             GameObject.Find("Participant").GetComponent<PlayerController>().ExternalStart(new Vector3(p.X,p.Y,p.Z));
         }
 

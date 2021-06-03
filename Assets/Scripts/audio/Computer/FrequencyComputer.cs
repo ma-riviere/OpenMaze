@@ -2,68 +2,125 @@
 
 namespace audio.Computer
 {
-    public abstract class FrequencyComputer
+    public abstract class FrequencyInterface:InternalAudioInterface
     {
-        protected float maxAngle, minAngle;
-        public const int HIGH_FREQ = 440, MED_FREQ=220,LOW_FREQ = 110;
+        protected int maxAngle, minAngle;
+        public const int HIGH_FREQ = 440, MED_FREQ = 220, LOW_FREQ = 110;
+        protected bool previousOut;
 
-        protected FrequencyComputer(float maxA)
+        protected FrequencyInterface(int maxA)
         {
             maxAngle = maxA;
             minAngle = -maxA;
         }
-        public abstract float computeFrequency(float angle);
+        public abstract void computeFrequency(float angle);
+
     }
 
-    public class ConstantComputer : FrequencyComputer
+    public class ConstantInterface : FrequencyInterface
     {
-        private float freq;
-        public ConstantComputer(float maxA,float f):base(maxA)
+        protected int freq1;
+        public ConstantInterface(int maxA, int f) : base(maxA)
         {
-            freq = f;
+            freq1 = f;
         }
 
-        public override float computeFrequency(float angle)
+        public override void computeFrequency(float angle)
         {
             if (angle > maxAngle || angle < minAngle)
-                return 0;
-            else return freq;
+            {
+                if (!previousOut)
+                {
+                    audioInterface.setFreq(0);
+                    previousOut = true;
+                }
+            }
+            else
+            {
+                if (previousOut)
+                {
+                    audioInterface.setFreq(freq1);
+                    previousOut = false;
+                }
+            }
         }
+
     }
 
-    public class ContinuousComputer : FrequencyComputer
+    public class ContinuousInterface : FrequencyInterface
     {
-        protected float k, b;
-        public ContinuousComputer(float maxAngle) : base(maxAngle)
+        private float k, b, f;
+        int maxF;
+        public ContinuousInterface(int maxAngle, int maxF) : base(maxAngle)
         {
             k = Mathf.Log(Mathf.Pow(0.25f, 1.0f / Mathf.Log(maxAngle)));
             b = Mathf.Log(HIGH_FREQ);
+            this.maxF = maxF;
         }
 
-        public override float computeFrequency(float angle)
+        public override void computeFrequency(float angle)
         {
             if (angle > maxAngle || angle < minAngle)
-                return 0;
-            return Mathf.Exp(k * Mathf.Log(angle) + b);
+            {
+                if (!previousOut)
+                {
+                    audioInterface.setFreq(0);
+                    previousOut = true;
+                }
+            }
+            else
+            {
+                previousOut = false;
+                f = Mathf.Exp(k * Mathf.Log(angle) + b);
+                if (f > maxF)
+                    f = maxF;
+                audioInterface.setFreq(f);
+            }
         }
+
     }
 
-    public class DiscreteComputer : FrequencyComputer
+    public class DiscreteInterface : ConstantInterface
     {
-        float threshold;
-        public DiscreteComputer(float max, float threshold) : base(max)
+        int threshold, freq2;
+        bool previousInFar, previousInClose;
+        public DiscreteInterface(int max, int threshold, int freq1, int freq2) : base(max, freq1)
         {
             this.threshold = threshold;
+            this.freq2 = freq2;
         }
 
-        public override float computeFrequency(float angle)
+        public override void computeFrequency(float angle)
         {
             if (angle > maxAngle || angle < minAngle)
-                return 0;
+            {
+                if (!previousOut)
+                {
+                    audioInterface.setFreq(0);
+                    previousOut = true;
+                    previousInFar = false;
+                }
+            }
             else if (angle < threshold)
-                return HIGH_FREQ;
-            else return LOW_FREQ;
+            {
+                if (!previousInClose)
+                {
+                    audioInterface.setFreq(freq2);
+                    previousInClose = true;
+                    previousInFar = false;
+                }
+            }
+            else if (!previousInFar)
+            {
+                audioInterface.setFreq(freq1);
+                previousInFar = true;
+                if (previousInClose)
+                    previousInClose = false;
+                else previousOut = false;
+            }
         }
 
     }
+
+
 }

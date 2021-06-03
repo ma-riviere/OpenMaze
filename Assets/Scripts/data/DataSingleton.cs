@@ -7,7 +7,7 @@ namespace data
     public class DataSingleton
     {
         //Our singleton instance
-        private static Data _data;
+        protected static Data _data;
 
         public static Data GetData()
         {

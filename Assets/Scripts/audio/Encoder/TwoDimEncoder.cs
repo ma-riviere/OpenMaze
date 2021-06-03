@@ -2,7 +2,7 @@
 {
     public abstract class TwoDimEncoder : SSAudioGeneration
     {
-        protected bool pointsTarget;
+        private bool pointsTarget;
         private void FixedUpdate()
         {
             pointsTarget = goodDirectionComputer.pointsTarget(transform.position, transform.forward);
@@ -11,20 +11,19 @@
         void Update()
         {
             if (pointsTarget)
-            {
-                noise.setNoise(true);
-            }
+                noise.setNoise();
             else
             {
-                noise.setNoise(false);
+                noise.unsetNoise();
                 computeOTvector();
                 computeAngle();
                 setFrequency();
-                //setGain();
+                setGain();
                 setStereo();
             }
         }
 
         protected abstract void setStereo();
+
     }
 }

@@ -1,44 +1,78 @@
-﻿namespace audio.Computer
+﻿using UnityEngine;
+
+namespace audio.Computer
 {
-    public abstract class GainComputer
+    public abstract class GainInterface:InternalAudioInterface
     {
         protected const float GAIN_MIN = 1.0f / 127.0f, GAIN_MAX = 3.0f / 127.0f;
         protected float distanceMax;
-        public abstract float compute(float value);
+        protected bool previousOut;
+        protected GainInterface()
+        {
+            previousOut = false;
+        }
+        public abstract void computeAndSend(float value);
+
     }
 
-    public class ContinuousGainComputer : GainComputer
+    public class ContinuousGainInterface : GainInterface
     {
         private float kGain, b;
 
-        public ContinuousGainComputer(float dMax)
+        public ContinuousGainInterface(float dMax):base()
         {
             distanceMax = dMax;
             kGain = -GAIN_MIN;
             b = GAIN_MAX;
         }
 
-        public override float compute(float value)
+        public override void computeAndSend(float value)
         {
             if (value > distanceMax)
-                return GAIN_MIN;
-            else return value * kGain + b;
+            {
+                if (!previousOut)
+                {
+                    audioInterface.setGain(GAIN_MIN);
+                    previousOut = true;
+                }
+            }
+            else
+            {
+                audioInterface.setGain(value * kGain + b);
+                previousOut = false;
+            }
         }
 
     }
 
-    public class DiscreteGainComputer : GainComputer
+    public class DiscreteGainInterface : GainInterface
     {
-        public DiscreteGainComputer(float dMax)
+        public DiscreteGainInterface(float dMax):base()
         {
             distanceMax = dMax;
         }
 
-        public override float compute(float value)
+        public override void computeAndSend(float value)
         {
+            Debug.Log(value);
             if (value > distanceMax)
-                return GAIN_MIN;
-            else return GAIN_MAX;
+            {
+                if (!previousOut)
+                {
+                    audioInterface.setGain(GAIN_MIN);
+                    previousOut = true;
+                }
+            }
+            else
+            {
+                if (previousOut)
+                {
+                    audioInterface.setGain(GAIN_MAX);
+                    previousOut = false;
+                }
+            }
         }
+
     }
+
 }

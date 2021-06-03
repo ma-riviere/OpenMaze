@@ -18,25 +18,13 @@ namespace audio.Computer
             horizontalPointedDirection.Set(OP.x, OP.z);
             return Vector2.SignedAngle(userToTargetHorizontalVector, horizontalPointedDirection);
         }
+
     }
 
     public class VerticalComputer : AngleComputer
     {
-        
         private Vector3 verticalPointedDirection;
-        
-        /*targetCenterOnScreen, verticalScreenPoint;
-        private Camera cam;
-        GameObject target;
-        
-        public VerticalComputer(Camera c, GameObject target)
-        {
-            cam = c;
-            this.target = target;
-            targetCenterOnScreen = cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint = new Vector3(targetCenterOnScreen.x, cam.pixelHeight / 2, targetCenterOnScreen.z);
-        }
-        */
+
         public VerticalComputer()
         {
             verticalPointedDirection = new Vector3();
@@ -44,15 +32,10 @@ namespace audio.Computer
 
         public float compute(Vector3 OT, Vector3 OP)
         {
-            /*
-            targetCenterOnScreen = cam.WorldToScreenPoint(target.transform.position);
-            verticalScreenPoint.x = targetCenterOnScreen.x;
-            verticalScreenPoint.z = targetCenterOnScreen.z;
-            verticalPointedDirection = cam.ScreenPointToRay(verticalScreenPoint).direction;
-            */
             verticalPointedDirection.Set(OT.x, OP.y * OT.magnitude, OT.z);
             return Vector3.Angle(OT, verticalPointedDirection);
         }
+
     }
 
     public class ThreeDComputer : AngleComputer
@@ -61,6 +44,56 @@ namespace audio.Computer
         {
             return Vector3.Angle(OT, OP);
         }
+
+    }
+
+    public interface TargetDirectionComputer
+    {
+        bool pointsTarget(Vector3 v1, Vector3 v2);
+    }
+
+    public class RayDirectionComputer : TargetDirectionComputer
+    {
+        private Collider target;
+        private Ray pointedDirection;
+        private RaycastHit hit;
+        public RayDirectionComputer(Collider c)
+        {
+            pointedDirection = new Ray();
+            target = c;
+        }
+
+        public bool pointsTarget(Vector3 pos, Vector3 dir)
+        {
+            pointedDirection.origin = pos;
+            pointedDirection.direction = dir;
+            return target.Raycast(pointedDirection, out hit, 1000);
+        }
+
+    }
+
+    public class AngleDirectionComputer : TargetDirectionComputer
+    {
+        int maxAngle;
+        public AngleDirectionComputer(int maxA)
+        {
+            maxAngle = maxA;
+        }
+
+        public bool pointsTarget(Vector3 userToTarget, Vector3 pointedDirection)
+        {
+            return Vector3.Angle(userToTarget, pointedDirection) < maxAngle;
+        }
+
+    }
+
+    public class VoidComputer : TargetDirectionComputer
+    {
+        public bool pointsTarget(Vector3 v1, Vector3 v2)
+        {
+            return false;
+        }
+
     }
 
 }

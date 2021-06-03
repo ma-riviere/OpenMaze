@@ -18,5 +18,7 @@ namespace audio
             horizontalAngle = horizontalComputer.compute(userToTargetVector, transform.forward);
             stereoMonoInterface.computeAndSend(horizontalAngle);
         }
+
     }
+
 }

@@ -1,5 +1,4 @@
-﻿using audio;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,51 +8,36 @@ namespace data
     public class Data
     {
         public long ExperimentStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
         // File locations
         public string SpritesPath = Application.streamingAssetsPath + "/2D_Objects/";
         public string PythonScriptsPath = Application.streamingAssetsPath + "/PythonScripts/";
         public string AutoRunConfigPath = Application.streamingAssetsPath + "/AutoRun_Config/";
-
         // whether or not to turn on timing diagnostics
         public bool TimingVerification;
-
         // value from which trials start incrementing in the config file. 
         public int TrialInitialValue = 1;
-
         // The amount of delay (in seconds) before a trial loads in. This value is used to 
         // ensure a consitent loading time between trials.
         public float TrialLoadingDelay = 3.0f;
-
         // The amount of time at the beginning of a trial when user input is ignore. This value
         // is used to avoid the user accidentally ending the trial by pressing the key pre-maturely.
         public float IgnoreUserInputDelay = 1.0f;
-
         // how often data is outputted. 
         public int OutputTimesPerSecond;
-
         //This is the object (defined below) which contains all data available for the main player
         public Character CharacterData;
-
         public Audio AudioData;
-
         // The output file of the character's movements during an experiment
         public string OutputFile;
-
         //This is a LIST of the different types of pickup items that are defined below
         public List<Goal> Goals;
-
         // Runtime objects to load into the trials
         public List<LandMark> Landmarks;
-
         // Contains all pre-defined trials
         public List<Trial> Trials;
-
         // Contains all Enclosure config objects
         public List<Enclosure> Enclosures;
-
         public List<BlockData> Blocks;
-
         public List<int> BlockOrder;
 
         [Serializable]
@@ -138,7 +122,6 @@ namespace data
             public string Type; // The object type (can be "2D" or "3D")
             public string Object; // The name of the prefab if it's 3D, image file name if it's 2D
             public string Image; // The location of the image file associated with the goal
-
             // Use list for serialization purposes
             public List<float> Position;
             public List<float> Rotation;
@@ -185,14 +168,15 @@ namespace data
         public class Audio
         {
             public string encoder;
-            public float maxAngle;
-            public float angleThreshold;
+            public int maxAngle;
+            public int angleThreshold;
+            public int margin;
             public float distanceMax;
             public string frequencyComputer;
             public string gainComputer;
             public bool stereo;
             public string stereoComputer;
-            public bool goodDir;
+            public string goodDir;
         }
 
         // This is a pillar object.
@@ -203,7 +187,6 @@ namespace data
             public string Object;
             public string Color; // Color as a hex value
             public string ImageLoc; // The location (for 2Dimagedisplayer)
-
             // Use list for serialization purposes
             public List<float> Position;
             public List<float> Rotation;

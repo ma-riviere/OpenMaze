@@ -14,5 +14,7 @@ namespace audio
             compute();
             stereoMonoInterface.computeAndSend(angle);
         }
+
     }
+
 }
