@@ -11,13 +11,18 @@ using Random = UnityEngine.Random;
 using audio;
 
 // This class is the primary player script, it allows the participant to move around.
+
+/// <summary>------------------VBar--------------
+/// Adds spatial-audio encoder component, contains the trigger logic for the task completion.
+/// Movement constraints added depending on the specified task.
+/// TODO : subclasses for trigger? move PD binding to audio interface.
+/// </summary>
 namespace wallSystem
 {
     public class PlayerController : MonoBehaviour
     {
         #region properties
         public Camera Cam;
-        private GenerateGenerateWall _gen;
         // The stream writer that writes data out to an output file.
         private readonly string _outDir;
         // This is the character controller system used for collision
@@ -31,6 +36,7 @@ namespace wallSystem
         private int localQuota;
 
         Mover mover;
+        VictoryTrigger trigger;
         public SSAudioGeneration ssAudio;
         GameObject currentTarget;
         #endregion
@@ -70,7 +76,6 @@ namespace wallSystem
             try
             {
                 _controller = GetComponent<CharacterController>();
-                _gen = GameObject.Find("WallCreator").GetComponent<GenerateGenerateWall>();
                 Cam.transform.Rotate(0, 0, 0);
             }
             catch (NullReferenceException e)
@@ -134,8 +139,6 @@ namespace wallSystem
             Cam.transform.localPosition = _controller.center = Vector3.zero;
             //Sets collider's radius and height values according to data. Collider is a cylinder.
             _controller.radius = _controller.height = DS.GetData().CharacterData.Radius;
-
-            ssAudio = SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData, _controller);
             //Depending on chosen type of spatial-audio encoder, in 2 (horizontal, vertical) or 3 dimensions, constraints the movement of the character controller.
             switch (DS.GetData().AudioData.encoder)
             {
@@ -143,39 +146,14 @@ namespace wallSystem
                 case "vertical": mover = new VerticalMover(transform); break;
                 default: mover = new ThreeDMover(transform); break;
             }
+            //If the task is limited to the horizontal or vertical plane, sticks the GameObject to this plane.
             mover.fixToPlane(pick);
+            if (DS.GetData().AudioData.victoryDelay > 0)
+                trigger = new DelayTrigger(DS.GetData().AudioData.victoryDelay);
+            else trigger = new InstantVictoryTrigger();
+            ssAudio = SSAudioGeneration.addSelectedAudioEncoder(DS.GetData().AudioData, _controller);
+            //For the pureData interface, allows for the task completion audio.
             GetComponent<LibPdInstance>().Bind("end");
-        }
-
-        // This is the collision system.
-        private void OnTriggerEnter(Collider other)
-        {
-            if (!other.gameObject.CompareTag("Pickup")) return;
-
-            ssAudio.playReachedTargetAudio();
-            currentTarget = other.gameObject;
-        }
-
-        public void receiveEndBang(string sender)
-        {
-            Destroy(currentTarget);
-            Destroy(ssAudio);
-            // Tally the number collected per current block
-            int BlockID = TrialProgress.GetCurrTrial().BlockID;
-            TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
-            TrialProgress.GetCurrTrial().NumCollected++;
-            E.LogData(
-                TrialProgress.GetCurrTrial().TrialProgress,
-                TrialProgress.GetCurrTrial().TrialStartTime,
-                transform,
-                1
-            );
-
-            if (--localQuota > 0) return;
-
-            E.Get().CurrTrial.Notify();
-            E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
-            TrialProgress.GetCurrTrial().Progress();
         }
 
         private void doInitialRotation()
@@ -212,124 +190,103 @@ namespace wallSystem
             _currDelay += Time.deltaTime;
         }
 
+        // ----VBar----- : added or modified
         private void FixedUpdate()
         {
             mover.rotate();
             _controller.Move(mover.computeMotion());
         }
 
-        private abstract class Mover
+        private void OnTriggerEnter(Collider other)
         {
-            protected Transform transform;
-            private Vector3 motion = Vector3.zero;
-            protected Vector2 r = Vector2.zero;
-            private float speed;
-            private float maxYAngle = 90f, minYAngle = -90f;
-            protected Mover(Transform t)
-            {
-                speed = DS.GetData().CharacterData.MovementSpeed;
-                transform = t;
-            }
-
-            public abstract void fixToPlane(Vector3 v);
-
-            public void rotate()
-            {
-                setRotation();
-                twoDtoQuaternionRotation();
-            }
-
-            public Vector3 computeMotion()
-            {
-                motion.Set(getSideMotion(), 0, Input.GetAxis("Vertical"));
-                return transform.TransformDirection(motion) * speed * Time.deltaTime;
-            }
-
-            protected abstract float getSideMotion();
-
-            protected abstract void setRotation();
-
-            private void twoDtoQuaternionRotation()
-            {
-                transform.rotation = Quaternion.Euler(r.y, r.x, 0);
-            }
-
-            protected void setXcurrentRotation()
-            {
-                r.x += Input.GetAxis("Mouse X");
-                r.x = Mathf.Repeat(r.x, 360);
-            }
-
-            protected void setYcurrentRotation()
-            {
-                r.y -= Input.GetAxis("Mouse Y");
-                r.y = Mathf.Clamp(r.y, minYAngle, maxYAngle);
-            }
-
+            if (!other.gameObject.CompareTag("Pickup")) return;
+            if (trigger.enter())
+                ssAudio.playReachedTargetAudio();
+            currentTarget = other.gameObject;
         }
 
-        private class HorizontalMover : Mover
+        private void OnTriggerStay(Collider other)
         {
-            public HorizontalMover(Transform t) : base(t)
-            {
-            }
-
-            public override void fixToPlane(Vector3 v)
-            {
-                transform.position = new Vector3(transform.position.x, v.y, transform.position.z);
-            }
-
-            protected override void setRotation()
-            {
-                setXcurrentRotation();
-            }
-
-            protected override float getSideMotion()
-            {
-                return Input.GetAxis("Horizontal");
-            }
-
-
+            if (!other.gameObject.CompareTag("Pickup")) return;
+            if (trigger.stay())
+                ssAudio.playReachedTargetAudio();
         }
 
-        private class VerticalMover : Mover
+        private void OnTriggerExit(Collider other)
         {
-            public VerticalMover(Transform t) : base(t) { }
-            public override void fixToPlane(Vector3 v)
+            trigger.exits();
+        }
+
+        public void receiveEndBang(string sender)
+        {
+            Destroy(currentTarget);
+            Destroy(ssAudio);
+            // Tally the number collected per current block
+            int BlockID = TrialProgress.GetCurrTrial().BlockID;
+            TrialProgress.GetCurrTrial().TrialProgress.NumCollectedPerBlock[BlockID]++;
+            TrialProgress.GetCurrTrial().NumCollected++;
+            E.LogData(
+                TrialProgress.GetCurrTrial().TrialProgress,
+                TrialProgress.GetCurrTrial().TrialStartTime,
+                transform,
+                1
+            );
+
+            if (--localQuota > 0) return;
+
+            E.Get().CurrTrial.Notify();
+            E.LogData(TrialProgress.GetCurrTrial().TrialProgress, TrialProgress.GetCurrTrial().TrialStartTime, transform);
+            TrialProgress.GetCurrTrial().Progress();
+        }
+
+        private interface VictoryTrigger
+        {
+            bool enter();
+            bool stay();
+            void exits();
+        }
+
+        private class InstantVictoryTrigger : VictoryTrigger
+        {
+            public InstantVictoryTrigger()
             {
-                transform.LookAt(new Vector3(v.x, Random.value * 3, v.z));
-                r.Set(transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.x);
+
             }
 
-            protected override void setRotation()
+            public bool enter()
             {
-                setYcurrentRotation();
+                return true;
             }
 
-            protected override float getSideMotion()
+            public bool stay() { return false; }
+            public void exits()
             {
-                return 0;
             }
         }
 
-        private class ThreeDMover : Mover
+        private class DelayTrigger : VictoryTrigger
         {
-            public ThreeDMover(Transform t) : base(t) { }
-
-            public override void fixToPlane(Vector3 v)
+            int ms;
+            float timeElapsed;
+            public DelayTrigger(int ms)
             {
+                this.ms = ms;
             }
 
-            protected override void setRotation()
+            public bool enter()
             {
-                setXcurrentRotation();
-                setYcurrentRotation();
+                timeElapsed = Time.time;
+                return false;
             }
 
-            protected override float getSideMotion()
+            public bool stay()
             {
-                return Input.GetAxis("Horizontal");
+                return Time.time - timeElapsed >= ms;
             }
+
+            public void exits() { timeElapsed = 0; }
+
+
         }
 
     }

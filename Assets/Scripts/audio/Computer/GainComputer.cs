@@ -1,8 +1,12 @@
 ﻿using UnityEngine;
+using audio.interfaces;
 
-namespace audio.Computer
+namespace audio.computers
 {
-    public abstract class GainInterface:InternalAudioInterface
+    /// <summary>
+    /// 
+    /// </summary>
+    public abstract class GainInterface : InternalAudioInterface
     {
         protected const float GAIN_MIN = 1.0f / 127.0f, GAIN_MAX = 3.0f / 127.0f;
         protected float distanceMax;
@@ -19,7 +23,7 @@ namespace audio.Computer
     {
         private float kGain, b;
 
-        public ContinuousGainInterface(float dMax):base()
+        public ContinuousGainInterface(float dMax) : base()
         {
             distanceMax = dMax;
             kGain = -GAIN_MIN;
@@ -47,7 +51,7 @@ namespace audio.Computer
 
     public class DiscreteGainInterface : GainInterface
     {
-        public DiscreteGainInterface(float dMax):base()
+        public DiscreteGainInterface(float dMax) : base()
         {
             distanceMax = dMax;
         }

@@ -1,11 +1,16 @@
-﻿namespace audio.Computer
+﻿using audio.interfaces;
+
+namespace audio.computers
 {
-    public abstract class StereoMono:InternalAudioInterface
+    public abstract class StereoMono : InternalAudioInterface
     {
         public abstract void computeAndSend(float a);
 
     }
 
+    /// <summary>
+    /// Empty class for disabled option.
+    /// </summary>
     public class MonoInterface : StereoMono
     {
         public MonoInterface() { }

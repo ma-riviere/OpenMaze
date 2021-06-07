@@ -1,4 +1,6 @@
-﻿namespace audio.Computer
+﻿using audio.interfaces;
+
+namespace audio.computers
 {
     public abstract class NoiseInterface : InternalAudioInterface
     {
@@ -18,8 +20,8 @@
         {
             if (!active)
             {
-                audioInterface.setHits(0.5f);
-                audioInterface.setFreq(0);
+                audioInterface.setNoise(0.5f);
+                audioInterface.setFrequency(0);
                 active = true;
             }
         }
@@ -28,13 +30,16 @@
         {
             if (active)
             {
-                audioInterface.setHits(0);
+                audioInterface.setNoise(0);
                 active = false;
             }
         }
 
     }
 
+    /// <summary>
+    /// Empty class for disabled option.
+    /// </summary>
     public class Void : NoiseInterface
     {
         public override void setNoise() { }

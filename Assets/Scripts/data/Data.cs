@@ -7,6 +7,7 @@ namespace data
     [Serializable]
     public class Data
     {
+        #region properties
         public long ExperimentStartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         // File locations
         public string SpritesPath = Application.streamingAssetsPath + "/2D_Objects/";
@@ -39,6 +40,7 @@ namespace data
         public List<Enclosure> Enclosures;
         public List<BlockData> Blocks;
         public List<int> BlockOrder;
+        #endregion
 
         [Serializable]
         public class BlockData
@@ -177,6 +179,7 @@ namespace data
             public bool stereo;
             public string stereoComputer;
             public string goodDir;
+            public int victoryDelay;
         }
 
         // This is a pillar object.

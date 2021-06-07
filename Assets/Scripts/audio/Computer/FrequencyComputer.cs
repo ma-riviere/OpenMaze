@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
+using audio.interfaces;
 
-namespace audio.Computer
+namespace audio.computers
 {
-    public abstract class FrequencyInterface:InternalAudioInterface
+    public abstract class FrequencyInterface : InternalAudioInterface
     {
         protected int maxAngle, minAngle;
         public const int HIGH_FREQ = 440, MED_FREQ = 220, LOW_FREQ = 110;
@@ -31,7 +32,7 @@ namespace audio.Computer
             {
                 if (!previousOut)
                 {
-                    audioInterface.setFreq(0);
+                    audioInterface.setFrequency(0);
                     previousOut = true;
                 }
             }
@@ -39,7 +40,7 @@ namespace audio.Computer
             {
                 if (previousOut)
                 {
-                    audioInterface.setFreq(freq1);
+                    audioInterface.setFrequency(freq1);
                     previousOut = false;
                 }
             }
@@ -64,7 +65,7 @@ namespace audio.Computer
             {
                 if (!previousOut)
                 {
-                    audioInterface.setFreq(0);
+                    audioInterface.setFrequency(0);
                     previousOut = true;
                 }
             }
@@ -74,7 +75,7 @@ namespace audio.Computer
                 f = Mathf.Exp(k * Mathf.Log(angle) + b);
                 if (f > maxF)
                     f = maxF;
-                audioInterface.setFreq(f);
+                audioInterface.setFrequency(f);
             }
         }
 
@@ -96,7 +97,7 @@ namespace audio.Computer
             {
                 if (!previousOut)
                 {
-                    audioInterface.setFreq(0);
+                    audioInterface.setFrequency(0);
                     previousOut = true;
                     previousInFar = false;
                 }
@@ -105,14 +106,14 @@ namespace audio.Computer
             {
                 if (!previousInClose)
                 {
-                    audioInterface.setFreq(freq2);
+                    audioInterface.setFrequency(freq2);
                     previousInClose = true;
                     previousInFar = false;
                 }
             }
             else if (!previousInFar)
             {
-                audioInterface.setFreq(freq1);
+                audioInterface.setFrequency(freq1);
                 previousInFar = true;
                 if (previousInClose)
                     previousInClose = false;

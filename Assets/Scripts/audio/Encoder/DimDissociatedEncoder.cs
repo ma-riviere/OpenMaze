@@ -1,7 +1,10 @@
-﻿using audio.Computer;
+﻿using audio.computers;
 
-namespace audio
+namespace audio.encoders
 {
+    /// <summary>
+    /// Encodes the horizontal and vertical projections of the POT angle, and contains an optional stereo interface.
+    /// </summary>
     public class DimDissociatedEncoder : TwoDimEncoder
     {
         private AngleComputer horizontalComputer;
@@ -15,7 +18,7 @@ namespace audio
 
         protected override void setStereo()
         {
-            horizontalAngle = horizontalComputer.compute(userToTargetVector, transform.forward);
+            horizontalAngle = horizontalComputer.computeAngle(userToTargetVector, transform.forward);
             stereoMonoInterface.computeAndSend(horizontalAngle);
         }
 

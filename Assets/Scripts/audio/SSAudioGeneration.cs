@@ -1,9 +1,31 @@
 ﻿using UnityEngine;
 using data;
-using audio.Computer;
+using audio.computers;
+using audio.encoders;
+using audio.interfaces;
 
 namespace audio
 {
+    ///<summary>
+    /// ------VBar----------
+    /// SS : Sensory Substitution
+    /// Processes spatial data into audio paramaters and send the latter to an audio interface, using several computers (Decorator pattern) for angles and direction, and frequency,stereo and gain parameters.
+    /// In the update methods inherited from MonoBehavior, the spatial information is updated, the audio parameters are computed and sent to output.
+    /// 
+    /// The static method addSelectedAudioEncoder adds the encoder ; its type, its computers and their parameters are initialized according to the data input.
+    /// 
+    /// Geometrical frame:
+    ///  - O is the Camera view position.
+    ///  - T is the current target position : in the current implementation, its closest point from the GameObject carrying this Component.
+    ///  - P is the point pointed by that GameObject : the end of the forward directional vector of that GameObject, in the current implementation.
+    /// 
+    /// The following spatal information is computed : the angle between the vectors O>P and O>T, the distance of O>T.
+    /// According to the specified encoding configuration, only the horizontal or the vertical projection, or both separately, of the angle may be computed, instead of the 3D ;
+    ///     this angle or these angles, and the distance, are encoded into audio parameters by individual computers.
+    ///     
+    /// TODO : put audio interface choice in a separate file
+
+    /// </summary>
     public abstract class SSAudioGeneration : MonoBehaviour
     {
         #region properties
@@ -28,13 +50,13 @@ namespace audio
 
         public static SSAudioGeneration addSelectedAudioEncoder(Data.Audio audioData, CharacterController cc)
         {
-            SSAudioGeneration ssA=null;
+            SSAudioGeneration ssA = null;
             switch (audioData.encoder)
             {
-                case "dissociated": ssA=cc.gameObject.AddComponent<DimDissociatedEncoder>(); break;
-                case "associated": ssA=cc.gameObject.AddComponent<DimAssociatedEncoder>(); break;
-                case "horizontal": ssA=cc.gameObject.AddComponent<HorizontalEncoder>(); break;
-                case "vertical": ssA=cc.gameObject.AddComponent<VerticalEncoder>(); break;
+                case "dissociated": ssA = cc.gameObject.AddComponent<DimDissociatedEncoder>(); break;
+                case "associated": ssA = cc.gameObject.AddComponent<DimAssociatedEncoder>(); break;
+                case "horizontal": ssA = cc.gameObject.AddComponent<HorizontalEncoder>(); break;
+                case "vertical": ssA = cc.gameObject.AddComponent<VerticalEncoder>(); break;
             }
             ssA.setParams(audioData, cc);
             return ssA;
@@ -64,10 +86,12 @@ namespace audio
             else stereoMonoInterface = new MonoInterface();
             switch (audioData.goodDir)
             {
-                case "angle":goodDirectionComputer = new AngleDirectionComputer(audioData.margin); 
+                case "angle":
+                    goodDirectionComputer = new AngleDirectionComputer(audioData.margin);
                     noise = new Noise();
                     break;
-                case "onTarget":goodDirectionComputer = new RayDirectionComputer(targetCollider);
+                case "onTarget":
+                    goodDirectionComputer = new RayDirectionComputer(targetCollider);
                     noise = new Noise();
                     break;
                 default:
@@ -96,9 +120,10 @@ namespace audio
 
         protected void computeAngle()
         {
-            angle = angleComputer.compute(userToTargetVector, transform.forward);
+            angle = angleComputer.computeAngle(userToTargetVector, transform.forward);
         }
 
+        //For graphical debugging
         private void LateUpdate()
         {
             //Debug.DrawRay(transform.position, userToTargetVector, Color.green);
@@ -118,10 +143,13 @@ namespace audio
             gainComputer.computeAndSend(distance);
         }
 
+        /// <summary>
+        /// When the target is considered to be reached by the GameObject, play the end audio.
+        /// </summary>
         public void playReachedTargetAudio()
         {
-            audioInstance.setHits(0);
-            audioInstance.setFreq(0);
+            audioInstance.setNoise(0);
+            audioInstance.setFrequency(0);
             audioInstance.setComplete();
         }
 

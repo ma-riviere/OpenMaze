@@ -1,16 +1,28 @@
 <h3 align="center">OpenMaze-Audio</h3>
 
 <div align="center">
-
  [![Status](https://img.shields.io/badge/status-active-success.svg)]() 
  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
-
 </div>
 
 ---
 
 **_Fork of the [OpenMaze](https://github.com/DuncanLab/OpenMaze) project for non-visual VR experiments on Spatial Cognition_**
 
+## TODO features:
+- logarithmic calculations for distance and stereo
+- random targets
+- 1 encoding per block, or pairs per XP in JSON
+- output ?
+- VR
+- multiplayer
+
+##  TODO :
+- test this code...
+- State pattern for computers : left, front, right, rear
+- finish PD interfacization
+- finish comments
+- start wiki
 
 ## ❔ Requirements:
 - Unity v2019.4.4f1

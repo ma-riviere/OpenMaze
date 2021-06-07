@@ -14,6 +14,7 @@
 
     "AudioData":{
         "encoder":"dissociated",
+        "victoryDelay":0,
         "goodDir":"onTarget",
         "stereo":true,
         "maxAngle":80,

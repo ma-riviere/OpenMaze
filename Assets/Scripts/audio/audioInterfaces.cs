@@ -1,17 +1,20 @@
-﻿namespace audio
+﻿namespace audio.interfaces
 {
     public interface AudioInterface
     {
-        void setFreq(float value);
+        void setFrequency(float value);
         void setStereo(float value1, float value2);
         void setLeft(float v);
         void setRight(float v);
         void setGain(float value);
-        void setHits(float value);
+        void setNoise(float value);
         void setComplete();
 
     }
 
+    /// <summary>
+    /// Abstract class for individual audio parameter computers : contains a reference to the audioInterface.
+    /// </summary>
     public abstract class InternalAudioInterface
     {
         public AudioInterface audioInterface;
@@ -30,7 +33,7 @@
             instance.SendFloat("complete", 1);
         }
 
-        public void setFreq(float value)
+        public void setFrequency(float value)
         {
             instance.SendFloat("freq", value);
         }
@@ -56,9 +59,9 @@
             instance.SendFloat("gain", gain);
         }
 
-        public void setHits(float hits)
+        public void setNoise(float hits)
         {
-            instance.SendFloat("hits", hits);
+            instance.SendFloat("noiz", hits);
         }
 
     }

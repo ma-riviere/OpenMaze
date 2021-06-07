@@ -1,6 +1,6 @@
-﻿using audio.Computer;
+﻿using audio.computers;
 
-namespace audio
+namespace audio.encoders
 {
     public class VerticalEncoder : OneDEncoder
     {
