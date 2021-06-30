@@ -94,3 +94,5 @@ fabric.properties
 
 # MAC OSX
 .DS_Store
+*.log
+*.log

@@ -1,0 +1,221 @@
+{
+    "OutputTimesPerSecond": 30,
+    "IgnoreUserInputDelay": 0.5,
+    "TimingVerification": false,
+    "CHARACTER DATA": "CHARACTER DATA----------*********-------------------CHARACTER DATA",
+    "CharacterData": {
+        "Radius":0.1,
+        "Height": 2,
+        "MovementSpeed": 7.0,
+        "RotationSpeed": 75.0,
+        "DistancePickup": 0,
+        "GoalRotationSpeed": 0
+    },
+
+    "AudioData":{
+        "encoder":"Horizontal",
+        "maxAngle":80,
+        "angleThreshold":15,
+        "frequencyComputer":"discrete",
+        "stereo":true
+    },
+    
+    "BLOCK DATA": "BLOCK DATA---------------------*********--------------------BLOCK DATA",
+    
+    "BlockOrder": [1],
+    
+    "Blocks": [
+        {
+            "Block 1": "Enclosure 1",
+            "TrialOrder": [1,2,3,4,5,6,7,8]
+        }
+    ],
+    
+    "TRIAL DATA": "TRIAL DATA--------------------*********------------------TRIAL DATA",
+    
+    "Trials": [
+        {
+            "Trial 1" : "Welcome Page",
+            "Instructional": 1,
+            "FileLocation": "Tutorial_Instructions/Welcome.png",
+            "TrialTime": -1,
+            "TrialEndKey": "Space"
+        },
+        {
+            "Trial 2": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [1],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 3": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [2],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 4": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [3],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 5": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [4],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 6": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [5],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 7": "Enclosure 1 - Invisible",
+            "DisplayText": "Locate the Invisible Apple!",
+            "TrialTime": 1000,
+            "Scene": 2,
+            "Enclosure": 1,
+            "StartPosition": [0, 0],
+            "StartFacing": 0,
+            "Rotate": 0,
+            "ActiveGoals": [],
+            "InvisibleGoals": [6],
+            "InactiveGoals": [],
+            "Quota": 1,
+            "LandMarks": [],
+            "TrialEndKey": "x"
+        },
+        {
+            "Trial 8": "End",
+            "Instructional": 1,
+            "FileLocation": "Tutorial_Instructions/End.png",
+            "TrialTime": -1,
+            "TrialEndKey": "x"
+        }
+    ],
+    "GOAL DATA": "GOAL DATA--------------------*********------------------GOAL DATA",
+    "Goals": [
+        {
+            "Goal 1" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [7, 1, 7],
+            "Scale": [0.5,0.5,0.5]
+        },
+        {
+            "Goal 2" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [0, 2, 7],
+            "Scale": [0.5,0.5,0.5]
+        },
+        {
+            "Goal 3" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [-7, 0, 0],
+            "Scale": [0.5,0.5,0.5]
+        },
+        {
+            "Goal 4" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [14, 2, 7],
+            "Scale": [0.5,0.5,0.5]
+        },
+        {
+            "Goal 5" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [7, 0, 14],
+            "Scale": [0.5,0.5,0.5]
+        },
+        {
+            "Goal 6" : "3D Model - Sphere",
+            "Type": "3D",
+            "Object": "Sphere",
+            "Sound": "eat",
+            "Color": "ff0000",
+            "Position": [14, 1, 14],
+            "Scale": [0.5,0.5,0.5]
+        }
+    ],
+    "LANDMARK DATA": "LANDMARK DATA----------*********------------------LANDMARK DATA",
+    "Landmarks": [],
+    "Enclosure DATA": "Enclosure DATA--------------------*********------------------Enclosure DATA",
+    "Enclosures": [
+        {
+            "Enclosure 1": "Enclosre 1",
+            "Sides": 4,
+            "Radius": 50,
+            "WallHeight": 4,
+            "WallColor": "ffffff",
+            "GroundTileSides": 4,
+            "GroundTileSize": 1.0,
+            "GroundColor": "000000",
+            "Position": [0, 0]
+        }
+    ]
+}
